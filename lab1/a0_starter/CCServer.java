@@ -24,6 +24,12 @@ class CCServer {
 		  - the payload is a string
 		    (UTF-8, big-endian)
 		*/
+		Socket csock = ssock.accept();
+		System.out.println("Just connect to " + csock.getRemoteSocketAddress());
+		DataInputStream din = new DataInputStream(csock.getInputStream());
+		// read the first four bytes of the input stream, which indicates the size of the payload
+		int dataLen = din.readInt();
+		System.out.println("The size of the data payload is: " + dataLen);
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
