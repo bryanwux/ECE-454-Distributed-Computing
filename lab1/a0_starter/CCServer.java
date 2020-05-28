@@ -1,3 +1,4 @@
+import javax.xml.crypto.Data;
 import java.io.*;
 import java.net.*;
 
@@ -28,8 +29,46 @@ class CCServer {
 		System.out.println("Just connect to " + csock.getRemoteSocketAddress());
 		DataInputStream din = new DataInputStream(csock.getInputStream());
 		// read the first four bytes of the input stream, which indicates the size of the payload
-		int dataLen = din.readInt();
-		System.out.println("The size of the data payload is: " + dataLen);
+		final int size = din.readInt();
+		System.out.println("The size of the data payload is: " + size);
+		final byte[] inBytes = new byte[size];
+		din.readFully(inBytes);
+
+		UnionFind graph = new UnionFind();
+
+		int i = 0;
+		while(i < inBytes.length){
+			int edge_i = 0;
+			while(inBytes[i] != 32){
+				char c = (char) inBytes[i];
+				edge_i = edge_i * 10 + Character.getNumericValue(c);
+				i++;
+			}
+			i++;
+
+			int edge_j = 0;
+			while(inBytes[i] != 10){
+				char c = (char) inBytes[i];
+				edge_j = edge_j * 10 + Character.getNumericValue(c);
+				i++;
+			}
+			i++;
+
+			graph.union(edge_i, edge_j);
+		}
+
+		DataOutputStream dout = new DataOutputStream(csock.getOutputStream());
+		StringBuilder output = new StringBuilder();
+		for(int edge: graph.keySet()){
+			output.append(edge).append(" ").append(graph.find(edge)).append("\n");
+		}
+
+		byte[] response = output.toString().getBytes();
+		dout.writeInt(response.length);
+		dout.write(response);
+		dout.flush();
+		dout.close();
+
 	    } catch (Exception e) {
 		e.printStackTrace();
 	    }
