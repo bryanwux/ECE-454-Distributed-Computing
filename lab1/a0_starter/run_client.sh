@@ -4,7 +4,7 @@ export CLASSPATH=.:lib/*
 ./build.sh
 
 echo --- Running
-F=tiny
+F=large
 SAMPLE_INPUT=sample_input/$F.txt
 SAMPLE_OUTPUT=sample_output/$F.out
 SERVER_OUTPUT=myoutput.txt
@@ -18,6 +18,7 @@ java CCClient $SERVER_HOST $SERVER_PORT $SAMPLE_INPUT $SERVER_OUTPUT
 
 echo --- Comparing server\'s output against sample output
 sort -o $SERVER_OUTPUT $SERVER_OUTPUT
+sort -o $SAMPLE_OUTPUT $SAMPLE_OUTPUT
 diff $SERVER_OUTPUT $SAMPLE_OUTPUT
 if [ $? -eq 0 ]; then
     echo Outputs match
