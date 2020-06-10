@@ -7,10 +7,12 @@ public class BcryptServiceHandler implements BcryptService.Iface {
     public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
     {
 	try {
-	    List<String> ret = new ArrayList<>();
-	    String onePwd = password.get(0);
-	    String oneHash = BCrypt.hashpw(onePwd, BCrypt.gensalt(logRounds));
-	    ret.add(oneHash);
+		List<String> ret = new ArrayList<>()
+	    for(String onePwd: password){
+			String oneHash = BCrypt.hashpw(onePwd, BCrypt.gensalt(logRounds));
+			ret.add(oneHash);
+		}
+
 	    return ret;
 	} catch (Exception e) {
 	    throw new IllegalArgument(e.getMessage());
@@ -21,9 +23,12 @@ public class BcryptServiceHandler implements BcryptService.Iface {
     {
 	try {
 	    List<Boolean> ret = new ArrayList<>();
-	    String onePwd = password.get(0);
-	    String oneHash = hash.get(0);
-	    ret.add(BCrypt.checkpw(onePwd, oneHash));
+	    for(int i = 0; i < password.size(); i++){
+	    	String onePwd = password.get(i)
+			String oneHash = hash.get(i);
+			ret.add(BCrypt.checkpw(onePwd, oneHash));
+		}
+
 	    return ret;
 	} catch (Exception e) {
 	    throw new IllegalArgument(e.getMessage());
