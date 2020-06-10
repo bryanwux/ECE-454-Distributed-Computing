@@ -44,7 +44,7 @@ class CCServer {
 				while(inBytes[i] != 32){
 					char c = (char) inBytes[i];
 					edge_i = edge_i * 10 + Character.getNumericValue(c);
-					i++;
+					i++;task
 				}
 				i++;
 
