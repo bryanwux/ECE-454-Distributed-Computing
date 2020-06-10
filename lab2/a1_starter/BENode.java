@@ -28,17 +28,38 @@ public class BENode {
 	int portBE = Integer.parseInt(args[2]);
 	log.info("Launching BE node on port " + portBE + " at host " + getHostName());
 
+	// connect FE and BE
+	BEFEConnector(getHostName(), portBE, hostFE, portFE);
+
 	// launch Thrift server
 	BcryptService.Processor processor = new BcryptService.Processor<BcryptService.Iface>(new BcryptServiceHandler());
-	TServerSocket socket = new TServerSocket(portBE);
-	TSimpleServer.Args sargs = new TSimpleServer.Args(socket);
+	TNonblockingServerSocket socket = new TNonblockingServerSocket(portBE);
+	THsHaServer.Args sargs = new THsHaServer.Args(socket);
 	sargs.protocolFactory(new TBinaryProtocol.Factory());
 	sargs.transportFactory(new TFramedTransport.Factory());
 	sargs.processorFactory(new TProcessorFactory(processor));
-	//sargs.maxWorkerThreads(64);
-	TSimpleServer server = new TSimpleServer(sargs);
+	sargs.maxWorkerThreads(8);
+
+	TServer server = new THsHaServer(sargs);
 	server.serve();
     }
+
+	private static void BEFEConnector(String BEHost, int BEPort, String FEHost, int FEPort){
+		// Establish connection between BE and FE
+		TSocket sock = new TSocket(FEHost, FEPort);
+		TTransport transport = new TFramedTransport(sock);
+		TProtocol protocol = new TBinaryProtocol(transport);
+		BcryptService.Client client = new BcryptService.Client(protocol);
+		Boolean isConnected = false;
+		while (!isConnected) {
+			try {
+				transport.open();
+				isConnected = true;
+				//client.registerBENode(getHostName(), portBE);
+				transport.close();
+			} catch (Exception e) {}
+		}
+	}
 
     static String getHostName()
     {
