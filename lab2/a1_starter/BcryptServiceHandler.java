@@ -138,15 +138,15 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			TNonblockingTransport transport;
 
 			ConcurrentHashMap<TransportPair, Boolean> ClientTransportPair = new ConcurrentHashMap<TransportPair, Boolean>();
-			for(int i=0; i<4; i++){
-				protocolFactory = new TCompactProtocol.Factory();
-				clientManager = new TAsyncClientManager();
-				transport = new TNonblockingSocket(BEHost, BEPort);
 
-				BcryptService.AsyncClient client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
-				TransportPair pair = new TransportPair(client, transport);
-				ClientTransportPair.put(pair, false);  // set backend node to busy
-			}
+			protocolFactory = new TCompactProtocol.Factory();
+			clientManager = new TAsyncClientManager();
+			transport = new TNonblockingSocket(BEHost, BEPort);
+
+			BcryptService.AsyncClient client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
+			TransportPair pair = new TransportPair(client, transport);
+			ClientTransportPair.put(pair, false);  // set backend node to busy
+
 
 			BackendNode BENode = new BackendNode(BEHost, BEPort, ClientTransportPair);
 			backendNodes.add(BENode);

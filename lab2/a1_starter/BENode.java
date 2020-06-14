@@ -60,13 +60,13 @@ public class BENode {
 		TSocket sock = new TSocket(FEHost, FEPort);
 		TTransport transport = new TFramedTransport(sock);
 		TProtocol protocol = new TBinaryProtocol(transport);
-		BcryptService.Client client = new BcryptService.Client(protocol);
+		BcryptService.Client FENode = new BcryptService.Client(protocol);
 		Boolean isConnected = false;
 		while (!isConnected) {
 			try {
 				transport.open();
 				isConnected = true;
-				client.BENodeHandler(getHostName(), BEPort);
+				FENode.BENodeHandler(BEHost, BEPort);
 				transport.close();
 			} catch (Exception e) {}
 		}
