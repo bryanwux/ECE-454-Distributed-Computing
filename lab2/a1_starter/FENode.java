@@ -38,5 +38,6 @@ public class FENode {
 		sargs.processorFactory(new TProcessorFactory(processor));
 		TServer server = new THsHaServer(sargs);
 		server.serve();
+		System.out.println("Done!");
     }
 }

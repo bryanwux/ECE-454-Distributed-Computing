@@ -26,7 +26,7 @@ public class Client {
 			List<String> password = new ArrayList<>();
 			//password.add(args[2]);
 			for(int i=0; i<20; i++){
-				password.add("cejfgheifoewn424  "+i);
+				password.add("cen424  "+i);
 			}
 			List<String> hash = client.hashPassword(password, (short)10);
 //			System.out.println("Password: " + password.get(0));
@@ -34,13 +34,8 @@ public class Client {
 //			System.out.println("Positive check: " + client.checkPassword(password, hash));
 //			hash.set(0, "$2a$14$reBHJvwbb0UWqJHLyPTVF.6Ld5sFRirZx/bXMeMmeurJledKYdZmG");
 //			System.out.println("Negative check: " + client.checkPassword(password, hash));
-			try {
-				hash.set(0, "too short");
-				List<Boolean> check = client.checkPassword(password, hash);
-				System.out.println("Exception check: no exception thrown");
-			} catch (Exception e) {
-				System.out.println("Exception check: exception thrown");
-			}
+			List<Boolean> check = client.checkPassword(password, hash);
+			System.out.println(check.toString());
 
 			transport.close();
 		} catch (TException x) {
