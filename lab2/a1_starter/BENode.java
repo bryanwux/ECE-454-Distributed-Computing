@@ -24,34 +24,34 @@ public class BENode {
     static Logger log;
 
     public static void main(String [] args) throws Exception {
-	if (args.length != 3) {
-	    System.err.println("Usage: java BENode FE_host FE_port BE_port");
-	    System.exit(-1);
-	}
+		if (args.length != 3) {
+			System.err.println("Usage: java BENode FE_host FE_port BE_port");
+			System.exit(-1);
+		}
 
-	// initialize log4j
-	BasicConfigurator.configure();
-	log = Logger.getLogger(BENode.class.getName());
+		// initialize log4j
+		BasicConfigurator.configure();
+		log = Logger.getLogger(BENode.class.getName());
 
-	String hostFE = args[0];
-	int portFE = Integer.parseInt(args[1]);
-	int portBE = Integer.parseInt(args[2]);
-	log.info("Launching BE node on port " + portBE + " at host " + getHostName());
+		String hostFE = args[0];
+		int portFE = Integer.parseInt(args[1]);
+		int portBE = Integer.parseInt(args[2]);
+		log.info("Launching BE node on port " + portBE + " at host " + getHostName());
 
-	// connect FE and BE
-	BEFEConnector(getHostName(), portBE, hostFE, portFE);
+		// connect FE and BE
+		BEFEConnector(getHostName(), portBE, hostFE, portFE);
 
-	// launch Thrift server
-	BcryptService.Processor processor = new BcryptService.Processor<BcryptService.Iface>(new BcryptServiceHandler());
-	TNonblockingServerSocket socket = new TNonblockingServerSocket(portBE);
-	THsHaServer.Args sargs = new THsHaServer.Args(socket);
-	sargs.protocolFactory(new TBinaryProtocol.Factory());
-	sargs.transportFactory(new TFramedTransport.Factory());
-	sargs.processorFactory(new TProcessorFactory(processor));
-	sargs.maxWorkerThreads(8);
+		// launch Thrift server
+		BcryptService.Processor processor = new BcryptService.Processor<BcryptService.Iface>(new BcryptServiceHandler());
+		TNonblockingServerSocket socket = new TNonblockingServerSocket(portBE);
+		THsHaServer.Args sargs = new THsHaServer.Args(socket);
+		sargs.protocolFactory(new TBinaryProtocol.Factory());
+		sargs.transportFactory(new TFramedTransport.Factory());
+		sargs.processorFactory(new TProcessorFactory(processor));
+		sargs.maxWorkerThreads(8);
 
-	TServer server = new THsHaServer(sargs);
-	server.serve();
+		TServer server = new THsHaServer(sargs);
+		server.serve();
     }
 
 	private static void BEFEConnector(String BEHost, int BEPort, String FEHost, int FEPort){
@@ -66,7 +66,7 @@ public class BENode {
 			try {
 				transport.open();
 				isConnected = true;
-				client.BENodeHandler(getHostName(), BEPort);
+				client.BENodeHandlerInit(getHostName(), BEPort);
 				transport.close();
 			} catch (Exception e) {}
 		}
@@ -74,10 +74,10 @@ public class BENode {
 
     static String getHostName()
     {
-	try {
-	    return InetAddress.getLocalHost().getHostName();
-	} catch (Exception e) {
-	    return "localhost";
-	}
+		try {
+			return InetAddress.getLocalHost().getHostName();
+		} catch (Exception e) {
+			return "localhost";
+		}
     }
 }

@@ -29,7 +29,7 @@ class TransportPair{
 class BackendNode{
     private String BEHost;
     private int BEPort;
-    private int RequestNum;
+    private int RequestNum;//what is this??
     private ConcurrentHashMap<TransportPair, Boolean> ClientTransportPair;
 
     BackendNode(String BEHost, int BEPort, ConcurrentHashMap<TransportPair, Boolean> ClientTransportPair ){
@@ -77,7 +77,7 @@ class BackendNode{
 
 }
 public class BENodeHandler extends BcryptServiceHandler{
-    public void BENodeHandler(String BEHost, int BEPort) throws IllegalArgument, org.apache.thrift.TException {
+    public void BENodeHandlerInit(String BEHost, int BEPort) throws IllegalArgument, org.apache.thrift.TException {
         try {
             TProtocolFactory protocolFactory;
             TAsyncClientManager clientManager;
@@ -96,8 +96,6 @@ public class BENodeHandler extends BcryptServiceHandler{
 
             BackendNode BENode = new BackendNode(BEHost, BEPort, ClientTransportPair);
             backendNodes.add(BENode);
-
-
         } catch (Exception e) {
 
         }
