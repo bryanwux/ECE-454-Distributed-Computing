@@ -7,6 +7,11 @@ import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TFramedTransport;
 
+import org.apache.thrift.server.THsHaServer;
+import org.apache.thrift.server.TServer;
+import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.protocol.TProtocol;
+
 
 public class FENode {
     static Logger log;
