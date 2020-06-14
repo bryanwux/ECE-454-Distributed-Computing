@@ -66,7 +66,7 @@ public class BENode {
 			try {
 				transport.open();
 				isConnected = true;
-				client.BENodeHandlerInit(getHostName(), BEPort);
+				client.BENodeHandler(getHostName(), BEPort);
 				transport.close();
 			} catch (Exception e) {}
 		}
