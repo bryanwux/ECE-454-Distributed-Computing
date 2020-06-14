@@ -1,11 +1,37 @@
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.impl.cookie.BasicClientCookie;
+import org.apache.log4j.Logger;
+import java.util.concurrent.*;
+
+import org.apache.thrift.protocol.TProtocolFactory;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class BcryptServiceHandler implements BcryptService.Iface {
-    public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
+    private ExecutorService executor;
+    private Logger log;
+	public static ConcurrentLinkedQueue<BackendNode> backendNodes;
+
+
+    public BcryptServiceHandler(){
+    	log = Logger.getLogger(BcryptServiceHandler.class.getName());
+    	executor = Executors.newFixedThreadPool(32);
+
+
+
+
+	}
+
+	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
     {
+		if (logRounds < 4 || logRounds > 16) {
+			throw new IllegalArgument("Bad logRounds!");
+		}
+		if (password.isEmpty()) {
+			throw new IllegalArgument("Empty passwords!");
+		}
+
 	try {
 		List<String> ret = new ArrayList<>();
 	    for(String onePwd: password){
@@ -17,6 +43,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	} catch (Exception e) {
 	    throw new IllegalArgument(e.getMessage());
 	}
+
+
     }
 
     public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException

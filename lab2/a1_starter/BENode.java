@@ -1,13 +1,23 @@
 import java.net.InetAddress;
-
+import java.net.Socket;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
+
 
 import org.apache.thrift.TProcessorFactory;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TNonblockingServerSocket;
+import org.apache.thrift.transport.TServerSocket;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.server.THsHaServer;
+import org.apache.thrift.server.TServer;
+
 
 
 public class BENode {
@@ -46,6 +56,7 @@ public class BENode {
 
 	private static void BEFEConnector(String BEHost, int BEPort, String FEHost, int FEPort){
 		// Establish connection between BE and FE
+
 		TSocket sock = new TSocket(FEHost, FEPort);
 		TTransport transport = new TFramedTransport(sock);
 		TProtocol protocol = new TBinaryProtocol(transport);
@@ -55,7 +66,7 @@ public class BENode {
 			try {
 				transport.open();
 				isConnected = true;
-				//client.registerBENode(getHostName(), portBE);
+				client.BENodeHandler(getHostName(), BEPort);
 				transport.close();
 			} catch (Exception e) {}
 		}
