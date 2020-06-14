@@ -8,6 +8,13 @@ import java.util.concurrent.*;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.mindrot.jbcrypt.BCrypt;
 
+abstract class BcryptServiceHandler {
+	List<String> hashPassword(List<String> password, short logRounds);
+	List<Boolean> checkPassword(List<String> password, List<String> hash);
+	void BENodeHandlerInit(String BEHost, int BEPort);
+
+}
+
 public class BcryptServiceHandler implements BcryptService.Iface {
     private ExecutorService executor;
     private Logger log;
