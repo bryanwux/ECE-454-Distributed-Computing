@@ -106,7 +106,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			return hashPasswordComp(password, logRounds);
 		}else {
 			BackendNode BE = getBE();
-			ClientTransportPair cp = BE.getTransportPair();
+			TransportPair cp = BE.getTransportPair();
 			List<String> hash = new ArrayList<String>();
 			if (cp != null) {
 				BcryptService.AsyncClient async = cp.getClient();
