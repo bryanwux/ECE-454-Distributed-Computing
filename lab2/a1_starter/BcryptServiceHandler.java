@@ -156,9 +156,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		boolean offload=false;
 		List<Boolean> check = new ArrayList<Boolean>();
 		while(!offload) {
-			
+			System.out.println(idleNodes.toString());
 			BackendNode BE = getBE();
-
 			//if all resources are locked, and the thread gets none, wait
 			if(BE==null){
 				continue;
@@ -218,6 +217,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			BackendNode BE = new BackendNode(BEHost, BEPort, pair);// set backend node to idle
 			idleNodes.add(BE);
+			System.out.println(idleNodes.size().toString() + " BE nodes in list");
 		} catch (Exception e) {
 		}
 	}
