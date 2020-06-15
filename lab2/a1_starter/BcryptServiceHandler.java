@@ -217,7 +217,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			BackendNode BE = new BackendNode(BEHost, BEPort, pair);// set backend node to idle
 			idleNodes.add(BE);
-			System.out.println((String) idleNodes.size() + " BE nodes in list");
+			System.out.println(idleNodes.size() + " BE nodes in list");
 		} catch (Exception e) {
 		}
 	}
