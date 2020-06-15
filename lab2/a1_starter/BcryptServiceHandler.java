@@ -1,6 +1,5 @@
 import java.util.ArrayList;
 import java.util.List;
-import javafx.util.Pair;
 
 import org.apache.http.impl.cookie.BasicClientCookie;
 import java.util.concurrent.*;
@@ -39,13 +38,15 @@ class BackendNode{
 	private String BEHost;
 	private int BEPort;
 	private int RequestNum;
-	private Pair<TransportPair,Boolean> ClientTransportPair;
+	private TransportPair ClientTransport;
+	private boolean isBusy;
 
-	BackendNode(String BEHost, int BEPort, Pair<TransportPair, Boolean> ClientTransportPair){
+	BackendNode(String BEHost, int BEPort, TransportPair ClientTransport, boolean isBusy){
 		this.BEHost = BEHost;
 		this.BEPort = BEPort;
-		this.RequestNum = 0;
-		this.ClientTransportPair = ClientTransportPair;
+		//this.RequestNum = 0;
+		this.ClientTransport=ClientTransport;
+		this.isBusy = isBusy;
 	}
 
 	public String getBEHost(){
@@ -71,11 +72,11 @@ class BackendNode{
 //	}
 
 	public synchronized TransportPair getTransportPair(){
-		return this.ClientTransportPair.getValue0();
+		return this.ClientTransport;
 	}
 
 	public synchronized bool isBusy() {
-		return this.ClientTransportPair.getValue1();
+		return this.isBusy;
 	}
 
 }
@@ -194,18 +195,14 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			TAsyncClientManager clientManager;
 			TNonblockingTransport transport;
 
-			Pair<TransportPair, Boolean> ClientTransportPair;
-
 			protocolFactory = new TCompactProtocol.Factory();
 			clientManager = new TAsyncClientManager();
 			transport = new TNonblockingSocket(BEHost, BEPort);
 
 			BcryptService.AsyncClient client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
 			TransportPair pair = new TransportPair(client, transport);
-			ClientTransportPair=new Pair<TransportPair, Boolean>(pair, false);  // set backend node to busy
 
-
-			BackendNode BENode = new BackendNode(BEHost, BEPort, ClientTransportPair);
+			BackendNode BENode = new BackendNode(BEHost, BEPort, pair, false);// set backend node to busy
 			backendNodes.add(BENode);
 		} catch (Exception e) {
 		}
