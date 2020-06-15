@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import javafx.util.Pair;
 
 import org.apache.http.impl.cookie.BasicClientCookie;
 import java.util.concurrent.*;
@@ -207,7 +208,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			BackendNode BENode = new BackendNode(BEHost, BEPort, ClientTransportPair);
 			backendNodes.add(BENode);
 		} catch (Exception e) {
-
 		}
 	}
 }
