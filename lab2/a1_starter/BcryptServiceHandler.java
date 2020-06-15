@@ -198,7 +198,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			clientManager = new TAsyncClientManager();
 			transport = new TNonblockingSocket(BEHost, BEPort);
 
-			BcryptService.Client client = new BcryptService.Client(protocolFactory, clientManager, transport);
+			BcryptService.Client client = new BcryptService.Client(protocolFactory);
 			TransportPair pair = new TransportPair(client, transport);
 
 			BackendNode BE = new BackendNode(BEHost, BEPort, pair, false);// set backend node to busy
