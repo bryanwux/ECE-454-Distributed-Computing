@@ -125,8 +125,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("Failed connect to target BE, drop it.");
 				}
 			}
-			return hash;
 		}
+		return hash;
 	}
 
 	public List<String> hashPasswordComp(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
@@ -178,8 +178,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("Failed connect to target BE, drop it.");
 				}
 			}
-			return check;
 		}
+		return check;
 	}
 
     public List<Boolean> checkPasswordComp(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
