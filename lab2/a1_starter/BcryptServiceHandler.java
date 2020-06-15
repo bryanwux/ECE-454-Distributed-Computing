@@ -18,7 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 class TransportPair{
-	private BcryptService.AsyncClient client;
+	private BcryptService.Client client;
 	private TNonblockingTransport transport;
 
 	public TransportPair(BcryptService.AsyncClient client, TNonblockingTransport transport){
@@ -26,7 +26,7 @@ class TransportPair{
 		this.transport = transport;
 	}
 
-	public BcryptService.AsyncClient getClient(){
+	public BcryptService.Client getClient(){
 		return this.client;
 	}
 
@@ -156,7 +156,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			TransportPair cp = BE.getTransportPair();
 			List<Boolean> check = new ArrayList<Boolean>();
 			if (cp != null) {
-				BcryptService.AsyncClient async = cp.getClient();
+				BcryptService.Client async = cp.getClient();
 				TNonblockingTransport transport = cp.getTransport();
 				try {
 					transport.open();
