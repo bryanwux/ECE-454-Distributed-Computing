@@ -105,7 +105,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		if(idleNodes.isEmpty()){
 			return hashPasswordComp(password, logRounds);
 		}else {
-			semaphore.acquire();
 			BackendNode BE = getBE();
 
 			System.out.println(idleNodes.toString());
@@ -129,7 +128,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("Failed connect to target BE, drop it.");
 				}
 			}
-			semaphore.release();
 			return hash;
 		}
 	}
@@ -161,7 +159,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		if(idleNodes.isEmpty()){
 			return checkPasswordComp(password, hash);
 		}else {
-			semaphore.acquire();
 			BackendNode BE = getBE();
 			System.out.println(idleNodes.toString());
 			if(BE==null){
@@ -183,7 +180,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("Failed connect to target BE, drop it.");
 				}
 			}
-			semaphore.release();
 			return check;
 		}
 	}
