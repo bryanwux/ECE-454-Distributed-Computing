@@ -109,7 +109,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			TransportPair cp = BE.getTransportPair();
 			List<String> hash = new ArrayList<String>();
 			if (cp != null) {
-				BcryptService.AsyncClient async = cp.getClient();
+				BcryptService.Client async = cp.getClient();
 				TNonblockingTransport transport = cp.getTransport();
 				try {
 					transport.open();
@@ -153,7 +153,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			return checkPasswordComp(password, hash);
 		}else {
 			BackendNode BE = getBE();
-			ClientTransportPair cp = BE.getTransportPair();
+			TransportPair cp = BE.getTransportPair();
 			List<Boolean> check = new ArrayList<Boolean>();
 			if (cp != null) {
 				BcryptService.AsyncClient async = cp.getClient();
@@ -198,7 +198,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			clientManager = new TAsyncClientManager();
 			transport = new TNonblockingSocket(BEHost, BEPort);
 
-			BcryptService.AsyncClient client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
+			BcryptService.Client client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
 			TransportPair pair = new TransportPair(client, transport);
 
 			BackendNode BE = new BackendNode(BEHost, BEPort, pair, false);// set backend node to busy
