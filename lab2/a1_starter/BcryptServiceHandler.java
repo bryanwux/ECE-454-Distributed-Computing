@@ -21,7 +21,7 @@ class TransportPair{
 	private BcryptService.Client client;
 	private TNonblockingTransport transport;
 
-	public TransportPair(BcryptService.AsyncClient client, TNonblockingTransport transport){
+	public TransportPair(BcryptService.Client client, TNonblockingTransport transport){
 		this.client = client;
 		this.transport = transport;
 	}
@@ -198,7 +198,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			clientManager = new TAsyncClientManager();
 			transport = new TNonblockingSocket(BEHost, BEPort);
 
-			BcryptService.Client client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
+			BcryptService.Client client = new BcryptService.Client(protocolFactory, clientManager, transport);
 			TransportPair pair = new TransportPair(client, transport);
 
 			BackendNode BE = new BackendNode(BEHost, BEPort, pair, false);// set backend node to busy
