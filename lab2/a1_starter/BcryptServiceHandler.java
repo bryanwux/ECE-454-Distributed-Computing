@@ -105,7 +105,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}
 		boolean offload=false;
 		List<String> hash = new ArrayList<String>();
-		while(!offload) {
+		while(!offload && beNum==0) {
 			BackendNode BE = getBE();
 
 			//if all resources are locked, and the thread gets none, wait
@@ -126,6 +126,12 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
+					modifyBECount(-1);
+					//if all BEs are disconnected
+					if(beNum==0){
+						System.out.println("FE doing work");
+						return checkPasswordComp(password, hash);
+					}
 				}
 			}
 		}
@@ -162,7 +168,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}
 		boolean offload=false;
 		List<Boolean> check = new ArrayList<Boolean>();
-		while(!offload && beNum) {
+		while(!offload && beNum==0) {
 			BackendNode BE = getBE();
 			//if all resources are locked, and the thread gets none, wait
 			if(BE==null){
