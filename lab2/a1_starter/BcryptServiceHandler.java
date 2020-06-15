@@ -52,7 +52,6 @@ class BackendNode{
 	BackendNode(String BEHost, int BEPort, TransportPair ClientTransportPair){
 		this.BEHost = BEHost;
 		this.BEPort = BEPort;
-		//this.RequestNum = 0;
 		this.ClientTransportPair=ClientTransportPair;
 	}
 
@@ -64,20 +63,6 @@ class BackendNode{
 		return BEPort;
 	}
 
-//	public synchronized int getRequestNum(){
-//		return this.RequestNum;
-//	}
-//
-//	public synchronized void incrementRequest(){
-//		this.RequestNum++;
-//	}
-
-//	public synchronized void decrementRequest(TransportPair pair){
-//		this.RequestNum--;
-//		// no one is using this client
-//		this.ClientTransportPair.put(pair, false);
-//	}
-
 	public synchronized TransportPair getTransportPair(){
 		return this.ClientTransportPair;
 	}
@@ -87,7 +72,6 @@ class BackendNode{
 public class BcryptServiceHandler implements BcryptService.Iface {
     //private ExecutorService executor;
 	public static List<BackendNode> idleNodes;
-	static Semaphore semaphore = new Semaphore(2);
     public BcryptServiceHandler(){
     	//executor = Executors.newFixedThreadPool(32);
     	idleNodes=new CopyOnWriteArrayList<BackendNode>();
@@ -100,19 +84,31 @@ public class BcryptServiceHandler implements BcryptService.Iface {
     	return null;
 	}
 
+	public synchronized void putBE(BackendNode BE){
+		if(BE != null){
+			idleNodes.add(BE);
+		}
+	}
+
+	public synchronized void delBE(BackendNode BE){
+		if(BE != null && !idleNodes.isEmpty()){
+			idleNodes.remove(BE);
+		}
+	}
+
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
 		if(idleNodes.isEmpty()){
 			return hashPasswordComp(password, logRounds);
-		}else {
+		}
+		boolean offload=false;
+		while(!offload) {
 			BackendNode BE = getBE();
 
 			System.out.println(idleNodes.toString());
 
-			if(BE==null){
-				return hashPasswordComp(password, logRounds);
-			}
-			idleNodes.remove(BE);
+			delBE(BE);
+
 			TransportPair cp = BE.getTransportPair();
 			List<String> hash = new ArrayList<String>();
 			if (cp != null) {
@@ -123,7 +119,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("BE doing work");
 					hash = async.hashPasswordComp(password, logRounds);
 					transport.close();
-					idleNodes.add(BE);
+					putBE(BE);
+					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
 				}
@@ -158,13 +155,13 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	{
 		if(idleNodes.isEmpty()){
 			return checkPasswordComp(password, hash);
-		}else {
+		}
+		boolean offload=false;
+		while(!offload) {
 			BackendNode BE = getBE();
 			System.out.println(idleNodes.toString());
-			if(BE==null){
-				return checkPasswordComp(password, hash);
-			}
-			idleNodes.remove(BE);
+
+			delBE(BE);
 			TransportPair cp = BE.getTransportPair();
 			List<Boolean> check = new ArrayList<Boolean>();
 			if (cp != null) {
@@ -175,7 +172,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("BE doing work");
 					check = async.checkPasswordComp(password, hash);
 					transport.close();
-					idleNodes.add(BE);
+					putBE(BE);
+					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
 				}
