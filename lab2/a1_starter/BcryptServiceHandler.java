@@ -2,7 +2,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.impl.cookie.BasicClientCookie;
-import org.apache.log4j.Logger;
 import java.util.concurrent.*;
 
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -38,10 +37,10 @@ class TransportPair{
 class BackendNode{
 	private String BEHost;
 	private int BEPort;
-	private int RequestNum;//what is this??
-	private ConcurrentHashMap<TransportPair, Boolean> ClientTransportPair;
+	private int RequestNum;
+	private Pair<TransportPair,Boolean> ClientTransportPair;
 
-	BackendNode(String BEHost, int BEPort, ConcurrentHashMap<TransportPair, Boolean> ClientTransportPair ){
+	BackendNode(String BEHost, int BEPort, Pair<TransportPair, Boolean> ClientTransportPair){
 		this.BEHost = BEHost;
 		this.BEPort = BEPort;
 		this.RequestNum = 0;
@@ -56,45 +55,76 @@ class BackendNode{
 		return BEPort;
 	}
 
-	public synchronized int getRequestNum(){
-		return this.RequestNum;
-	}
+//	public synchronized int getRequestNum(){
+//		return this.RequestNum;
+//	}
+//
+//	public synchronized void incrementRequest(){
+//		this.RequestNum++;
+//	}
 
-	public synchronized void incrementRequest(){
-		this.RequestNum++;
-	}
-
-	public synchronized void decrementRequest(TransportPair pair){
-		this.RequestNum--;
-		// no one is using this client
-		this.ClientTransportPair.put(pair, false);
-	}
+//	public synchronized void decrementRequest(TransportPair pair){
+//		this.RequestNum--;
+//		// no one is using this client
+//		this.ClientTransportPair.put(pair, false);
+//	}
 
 	public synchronized TransportPair getTransportPair(){
-		Iterator ctIterator = ClientTransportPair.entrySet().iterator();
-		while(ctIterator.hasNext()){
-			Map.Entry entry = (Map.Entry) ctIterator.next();
-			if ((Boolean) entry.getValue() == false){
-				ClientTransportPair.put((TransportPair)entry.getKey(), true);
-				return (TransportPair)entry.getKey();
-			}
-		}
-		return null;
+		return this.ClientTransportPair.getValue0();
 	}
+
+	public synchronized bool isBusy() {
+		return this.ClientTransportPair.getValue1();
+	}
+
 }
 
 public class BcryptServiceHandler implements BcryptService.Iface {
-    private ExecutorService executor;
-    private Logger log;
-	public static ConcurrentLinkedQueue<BackendNode> backendNodes;
+    //private ExecutorService executor;
+	public static List<BENode> backendNodes = new CopyOnWriteArrayList<>();
 
     public BcryptServiceHandler(){
-    	log = Logger.getLogger(BcryptServiceHandler.class.getName());
-    	executor = Executors.newFixedThreadPool(32);
+    	//executor = Executors.newFixedThreadPool(32);
+    	backendNodes=new ConcurrentLinkedQueue<BackendNode>();
+	}
+
+	public synchronized BackendNode getBE(){
+    	for(BackendNode be : backendNodes) {
+			if (!be.isBusy()){
+				return be;
+			}
+		}
+    	return null;
 	}
 
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
-    {
+	{
+		if(backendNodes.isEmpty()){
+			return hashPasswordComp(password, hash);
+		}else {
+			BackendNode BE = getBE();
+			ClientTransportPair cp = BE.getTransportPair();
+			List<String> hash = new ArrayList<String>();
+			if (cp != null) {
+				BcryptService.AsyncClient async = cp.getClient();
+				TNonblockingTransport transport = cp.getTransport();
+				async.checkPasswordComp(password, hash);
+				try {
+					transport.open();
+					System.out.println("BE doing work");
+					hash = client.hashPasswordComp(password, logRounds);
+					transport.close();
+				} catch (TTransportException t) {
+					System.out.println("Failed connect to target BE, drop it.");
+					backendNodes.remove(BE);
+				}
+			}
+			return hash;
+		}
+	}
+
+	public List<String> hashPasswordComp(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
+	{
 		if (logRounds < 4 || logRounds > 16) {
 			throw new IllegalArgument("Bad logRounds!");
 		}
@@ -102,33 +132,59 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			throw new IllegalArgument("Empty passwords!");
 		}
 
-	try {
-		List<String> ret = new ArrayList<>();
-	    for(String onePwd: password){
-			String oneHash = BCrypt.hashpw(onePwd, BCrypt.gensalt(logRounds));
-			ret.add(oneHash);
+		try {
+			List<String> ret = new ArrayList<>();
+			for(String onePwd: password){
+				String oneHash = BCrypt.hashpw(onePwd, BCrypt.gensalt(logRounds));
+				ret.add(oneHash);
+			}
+
+			return ret;
+		} catch (Exception e) {
+			throw new IllegalArgument(e.getMessage());
 		}
-
-	    return ret;
-	} catch (Exception e) {
-	    throw new IllegalArgument(e.getMessage());
 	}
-    }
 
-    public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
+	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
+	{
+		if(backendNodes.isEmpty()){
+			return checkPasswordComp(password, hash);
+		}else {
+			BackendNode BE = getBE();
+			ClientTransportPair cp = BE.getTransportPair();
+			List<String> hash = new ArrayList<String>();
+			if (cp != null) {
+				BcryptService.AsyncClient async = cp.getClient();
+				TNonblockingTransport transport = cp.getTransport();
+				async.checkPasswordComp(password, hash);
+				try {
+					transport.open();
+					System.out.println("BE doing work");
+					hash = client.checkPasswordComp(password, logRounds);
+					transport.close();
+				} catch (TTransportException t) {
+					System.out.println("Failed connect to target BE, drop it.");
+					backendNodes.remove(BE);
+				}
+			}
+			return hash;
+		}
+	}
+
+    public List<Boolean> checkPasswordComp(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
     {
-	try {
-	    List<Boolean> ret = new ArrayList<>();
-	    for(int i = 0; i < password.size(); i++){
-	    	String onePwd = password.get(i);
-			String oneHash = hash.get(i);
-			ret.add(BCrypt.checkpw(onePwd, oneHash));
-		}
+		try {
+			List<Boolean> ret = new ArrayList<>();
+			for(int i = 0; i < password.size(); i++){
+				String onePwd = password.get(i);
+				String oneHash = hash.get(i);
+				ret.add(BCrypt.checkpw(onePwd, oneHash));
+			}
 
-	    return ret;
-	} catch (Exception e) {
-	    throw new IllegalArgument(e.getMessage());
-	}
+			return ret;
+		} catch (Exception e) {
+			throw new IllegalArgument(e.getMessage());
+		}
     }
 
 	public void BENodeHandler(String BEHost, int BEPort) throws IllegalArgument, org.apache.thrift.TException {
@@ -137,7 +193,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			TAsyncClientManager clientManager;
 			TNonblockingTransport transport;
 
-			ConcurrentHashMap<TransportPair, Boolean> ClientTransportPair = new ConcurrentHashMap<TransportPair, Boolean>();
+			Pair<TransportPair, Boolean> ClientTransportPair;
 
 			protocolFactory = new TCompactProtocol.Factory();
 			clientManager = new TAsyncClientManager();
@@ -145,7 +201,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			BcryptService.AsyncClient client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
 			TransportPair pair = new TransportPair(client, transport);
-			ClientTransportPair.put(pair, false);  // set backend node to busy
+			ClientTransportPair=new Pair<TransportPair, Boolean>(pair, false);  // set backend node to busy
 
 
 			BackendNode BENode = new BackendNode(BEHost, BEPort, ClientTransportPair);
