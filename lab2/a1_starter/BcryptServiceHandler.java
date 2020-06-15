@@ -100,6 +100,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		boolean offload=false;
 		List<String> hash = new ArrayList<String>();
 		while(!offload) {
+			System.out.println(idleNodes.toString());
 			BackendNode BE = getBE();
 
 			//if all resources are locked, and the thread gets none, wait
