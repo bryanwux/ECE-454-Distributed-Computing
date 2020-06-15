@@ -118,6 +118,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					hash = async.hashPasswordComp(password, logRounds);
 					transport.close();
 					putBE(BE);
+					System.out.println(idleNodes.toString());
 					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
