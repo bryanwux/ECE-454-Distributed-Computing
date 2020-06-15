@@ -109,9 +109,9 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			BackendNode BE = getBE();
 
 			System.out.println(idleNodes.toString());
-
+			System.out.println("BE before delete is: "+BE.toString());
 			delBE(BE);
-
+			System.out.println("BE after delete is: "+BE.toString());
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
