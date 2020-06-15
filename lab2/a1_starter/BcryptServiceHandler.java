@@ -90,12 +90,12 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
     public BcryptServiceHandler(){
     	//executor = Executors.newFixedThreadPool(32);
-    	backendNodes=new CopyOnWriteArrayList<BackendNode>();
+    	idleNodes=new CopyOnWriteArrayList<BackendNode>();
 	}
 
 	public synchronized BackendNode getBE(){
     	if(!idleNodes.isEmpty()){
-    		return idleNodes[0];
+    		return idleNodes.get(0);
 		}
     	return null;
 	}
@@ -109,7 +109,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			if(BE==null){
 				return hashPasswordComp(password, logRounds);
 			}
-			idleNodes.remove(BE)
+			idleNodes.remove(BE);
 			TransportPair cp = BE.getTransportPair();
 			List<String> hash = new ArrayList<String>();
 			if (cp != null) {
