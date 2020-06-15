@@ -130,7 +130,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					//if all BEs are disconnected
 					if(beNum==0){
 						System.out.println("FE doing work");
-						return checkPasswordComp(password, hash);
+						return hashPasswordComp(password, hash);
 					}
 				}
 			}
