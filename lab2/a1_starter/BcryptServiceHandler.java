@@ -87,7 +87,7 @@ class BackendNode{
 public class BcryptServiceHandler implements BcryptService.Iface {
     //private ExecutorService executor;
 	public static List<BackendNode> idleNodes;
-
+	static Semaphore semaphore = new Semaphore(2);
     public BcryptServiceHandler(){
     	//executor = Executors.newFixedThreadPool(32);
     	idleNodes=new CopyOnWriteArrayList<BackendNode>();
@@ -105,7 +105,11 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		if(idleNodes.isEmpty()){
 			return hashPasswordComp(password, logRounds);
 		}else {
+			semaphore.acquire();
 			BackendNode BE = getBE();
+
+			System.out.println(idleNodes.toString());
+
 			if(BE==null){
 				return hashPasswordComp(password, logRounds);
 			}
@@ -125,6 +129,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("Failed connect to target BE, drop it.");
 				}
 			}
+			semaphore.release();
 			return hash;
 		}
 	}
@@ -156,7 +161,9 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		if(idleNodes.isEmpty()){
 			return checkPasswordComp(password, hash);
 		}else {
+			semaphore.acquire();
 			BackendNode BE = getBE();
+			System.out.println(idleNodes.toString());
 			if(BE==null){
 				return checkPasswordComp(password, hash);
 			}
@@ -176,6 +183,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("Failed connect to target BE, drop it.");
 				}
 			}
+			semaphore.release();
 			return check;
 		}
 	}
