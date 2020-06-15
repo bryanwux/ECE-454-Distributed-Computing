@@ -7,11 +7,19 @@ import java.util.concurrent.*;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.mindrot.jbcrypt.BCrypt;
 
-import org.apache.thrift.async.TAsyncClientManager;
-import org.apache.thrift.protocol.TCompactProtocol;
-import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.TNonblockingSocket;
-import org.apache.thrift.transport.TNonblockingTransport;
+//import org.apache.thrift.async.TAsyncClientManager;
+//import org.apache.thrift.protocol.TCompactProtocol;
+//import org.apache.thrift.protocol.TProtocolFactory;
+//import org.apache.thrift.transport.TNonblockingSocket;
+//import org.apache.thrift.transport.TNonblockingTransport;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TSocket;
+import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TTransportFactory;
+import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.Iterator;
@@ -19,9 +27,9 @@ import java.util.Map;
 
 class TransportPair{
 	private BcryptService.Client client;
-	private TNonblockingTransport transport;
+	private TTransport transport;
 
-	public TransportPair(BcryptService.Client client, TNonblockingTransport transport){
+	public TransportPair(BcryptService.Client client, TTransport transport){
 		this.client = client;
 		this.transport = transport;
 	}
@@ -30,7 +38,7 @@ class TransportPair{
 		return this.client;
 	}
 
-	public TNonblockingTransport getTransport(){
+	public TTransport getTransport(){
 		return this.transport;
 	}
 }
@@ -110,7 +118,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			List<String> hash = new ArrayList<String>();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
-				TNonblockingTransport transport = cp.getTransport();
+				TTransport transport = cp.getTransport();
 				try {
 					transport.open();
 					System.out.println("BE doing work");
@@ -157,7 +165,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			List<Boolean> check = new ArrayList<Boolean>();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
-				TNonblockingTransport transport = cp.getTransport();
+				TTransport transport = cp.getTransport();
 				try {
 					transport.open();
 					System.out.println("BE doing work");
@@ -190,15 +198,19 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public void BENodeHandler(String BEHost, int BEPort) throws IllegalArgument, org.apache.thrift.TException {
 		try {
-			TProtocolFactory protocolFactory;
-			TAsyncClientManager clientManager;
-			TNonblockingTransport transport;
+//			TProtocolFactory protocolFactory;
+//			TAsyncClientManager clientManager;
+//			TNonblockingTransport transport;
+//
+//			protocolFactory = new TCompactProtocol.Factory();
+//			clientManager = new TAsyncClientManager();
+//			transport = new TNonblockingSocket(BEHost, BEPort);
 
-			protocolFactory = new TCompactProtocol.Factory();
-			clientManager = new TAsyncClientManager();
-			transport = new TNonblockingSocket(BEHost, BEPort);
+			TSocket sock = new TSocket(server.beHost, server.bePort);
+			TTransport transport = new TFramedTransport(sock);
+			TProtocol protocol = new TBinaryProtocol(transport);
+			BcryptService.Client client = new BcryptService.Client(protocol);
 
-			BcryptService.Client client = new BcryptService.Client(protocolFactory);
 			TransportPair pair = new TransportPair(client, transport);
 
 			BackendNode BE = new BackendNode(BEHost, BEPort, pair, false);// set backend node to busy
