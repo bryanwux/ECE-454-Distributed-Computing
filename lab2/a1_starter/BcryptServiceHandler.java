@@ -114,7 +114,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				TTransport transport = cp.getTransport();
 				try {
 					transport.open();
-					System.out.println("BE "+BE.toString+"doing work");
+					System.out.println("BE "+BE.toString()+"doing work");
 					hash = async.hashPasswordComp(password, logRounds);
 					transport.close();
 					putBE(BE);
@@ -170,7 +170,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				TTransport transport = cp.getTransport();
 				try {
 					transport.open();
-					System.out.println("BE "+BE.toString+"doing work");
+					System.out.println("BE "+BE.toString()+"doing work");
 					check = async.checkPasswordComp(password, hash);
 					transport.close();
 					putBE(BE);
