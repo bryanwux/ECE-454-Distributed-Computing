@@ -72,7 +72,7 @@ class BackendNode{
 public class BcryptServiceHandler implements BcryptService.Iface {
     //private ExecutorService executor;
 	public static List<BackendNode> idleNodes;
-	public static beNum=0;
+	public static int beNum=0;
     public BcryptServiceHandler(){
     	//executor = Executors.newFixedThreadPool(32);
     	idleNodes=new CopyOnWriteArrayList<BackendNode>();
