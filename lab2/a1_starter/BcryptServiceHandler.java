@@ -79,7 +79,10 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public synchronized BackendNode getBE(){
     	if(!idleNodes.isEmpty()){
-    		return idleNodes.get(0);
+    		BackendNode BE = idleNodes.get(0);
+    		idleNodes.remove(BE);
+			System.out.println("Got BE: "+BE.toString());
+    		return BE;
 		}
     	return null;
 	}
@@ -91,13 +94,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}
 	}
 
-	public synchronized void delBE(BackendNode BE){
-		if(BE != null && !idleNodes.isEmpty()){
-			idleNodes.remove(BE);
-			System.out.println("Del BE: "+BE.toString());
-		}
-	}
-
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
 		if(idleNodes.isEmpty()){
@@ -106,12 +102,10 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		boolean offload=false;
 		List<String> hash = new ArrayList<String>();
 		while(!offload) {
+			System.out.println("idlelist before get is: "+idleNodes.toString());
 			BackendNode BE = getBE();
+			System.out.println("idlelist after get is: "+idleNodes.toString());
 
-			System.out.println(idleNodes.toString());
-			System.out.println("BE before delete is: "+BE.toString());
-			delBE(BE);
-			System.out.println("BE after delete is: "+BE.toString());
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
@@ -161,10 +155,11 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		boolean offload=false;
 		List<Boolean> check = new ArrayList<Boolean>();
 		while(!offload) {
+			
+			System.out.println("idlelist before get is: "+idleNodes.toString());
 			BackendNode BE = getBE();
-			System.out.println(idleNodes.toString());
+			System.out.println("idlelist after get is: "+idleNodes.toString());
 
-			delBE(BE);
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
