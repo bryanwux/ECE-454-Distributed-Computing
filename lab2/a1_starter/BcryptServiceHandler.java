@@ -87,12 +87,14 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	public synchronized void putBE(BackendNode BE){
 		if(BE != null){
 			idleNodes.add(BE);
+			System.out.println("Put BE: "+BE.toString());
 		}
 	}
 
 	public synchronized void delBE(BackendNode BE){
 		if(BE != null && !idleNodes.isEmpty()){
 			idleNodes.remove(BE);
+			System.out.println("Del BE: "+BE.toString());
 		}
 	}
 
@@ -102,6 +104,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			return hashPasswordComp(password, logRounds);
 		}
 		boolean offload=false;
+		List<String> hash = new ArrayList<String>();
 		while(!offload) {
 			BackendNode BE = getBE();
 
@@ -110,7 +113,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			delBE(BE);
 
 			TransportPair cp = BE.getTransportPair();
-			List<String> hash = new ArrayList<String>();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
 				TTransport transport = cp.getTransport();
@@ -157,13 +159,13 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			return checkPasswordComp(password, hash);
 		}
 		boolean offload=false;
+		List<Boolean> check = new ArrayList<Boolean>();
 		while(!offload) {
 			BackendNode BE = getBE();
 			System.out.println(idleNodes.toString());
 
 			delBE(BE);
 			TransportPair cp = BE.getTransportPair();
-			List<Boolean> check = new ArrayList<Boolean>();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
 				TTransport transport = cp.getTransport();
