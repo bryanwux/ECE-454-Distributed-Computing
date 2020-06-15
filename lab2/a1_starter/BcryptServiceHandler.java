@@ -106,6 +106,11 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			BackendNode BE = getBE();
 			System.out.println("idlelist after get is: "+idleNodes.toString());
 
+			//if all resources are locked, and the thread gets none, wait
+			if(BE==null){
+				continue;
+			}
+
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
@@ -155,11 +160,16 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		boolean offload=false;
 		List<Boolean> check = new ArrayList<Boolean>();
 		while(!offload) {
-			
+
 			System.out.println("idlelist before get is: "+idleNodes.toString());
 			BackendNode BE = getBE();
 			System.out.println("idlelist after get is: "+idleNodes.toString());
 
+			//if all resources are locked, and the thread gets none, wait
+			if(BE==null){
+				continue;
+			}
+			
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
 				BcryptService.Client async = cp.getClient();
