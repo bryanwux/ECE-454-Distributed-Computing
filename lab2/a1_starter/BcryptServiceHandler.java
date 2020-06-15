@@ -95,12 +95,12 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
 		if(idleNodes.isEmpty()){
+			System.out.println("FE doing work");
 			return hashPasswordComp(password, logRounds);
 		}
 		boolean offload=false;
 		List<String> hash = new ArrayList<String>();
 		while(!offload) {
-			System.out.println(idleNodes.toString());
 			BackendNode BE = getBE();
 
 			//if all resources are locked, and the thread gets none, wait
@@ -118,7 +118,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					hash = async.hashPasswordComp(password, logRounds);
 					transport.close();
 					putBE(BE);
-					System.out.println(idleNodes.toString());
 					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
@@ -153,12 +152,12 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
 	{
 		if(idleNodes.isEmpty()){
+			System.out.println("FE doing work");
 			return checkPasswordComp(password, hash);
 		}
 		boolean offload=false;
 		List<Boolean> check = new ArrayList<Boolean>();
 		while(!offload) {
-			System.out.println(idleNodes.toString());
 			BackendNode BE = getBE();
 			//if all resources are locked, and the thread gets none, wait
 			if(BE==null){
