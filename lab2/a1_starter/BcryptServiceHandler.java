@@ -12,6 +12,7 @@ import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TNonblockingSocket;
 import org.apache.thrift.transport.TNonblockingTransport;
+import org.apache.thrift.transport.TTransportException;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -38,10 +39,10 @@ class BackendNode{
 	private String BEHost;
 	private int BEPort;
 	private int RequestNum;
-	private TransportPair ClientTransport;
+	private TransportPair ClientTransportPair;
 	private boolean isBusy;
 
-	BackendNode(String BEHost, int BEPort, TransportPair ClientTransport, boolean isBusy){
+	BackendNode(String BEHost, int BEPort, TransportPair ClientTransportPair, boolean isBusy){
 		this.BEHost = BEHost;
 		this.BEPort = BEPort;
 		//this.RequestNum = 0;
@@ -75,7 +76,7 @@ class BackendNode{
 		return this.ClientTransport;
 	}
 
-	public synchronized bool isBusy() {
+	public synchronized boolean isBusy() {
 		return this.isBusy;
 	}
 
@@ -83,11 +84,11 @@ class BackendNode{
 
 public class BcryptServiceHandler implements BcryptService.Iface {
     //private ExecutorService executor;
-	public static List<BENode> backendNodes = new CopyOnWriteArrayList<>();
+	public static List<BackendNode> backendNodes;
 
     public BcryptServiceHandler(){
     	//executor = Executors.newFixedThreadPool(32);
-    	backendNodes=new ConcurrentLinkedQueue<BackendNode>();
+    	backendNodes=new CopyOnWriteArrayList<BackendNode>();
 	}
 
 	public synchronized BackendNode getBE(){
@@ -110,13 +111,13 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			if (cp != null) {
 				BcryptService.AsyncClient async = cp.getClient();
 				TNonblockingTransport transport = cp.getTransport();
-				async.checkPasswordComp(password, hash);
+				async.checkPasswordComp(password, logRounds);
 				try {
 					transport.open();
 					System.out.println("BE doing work");
 					hash = client.hashPasswordComp(password, logRounds);
 					transport.close();
-				} catch (TTransportException t) {
+				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
 					backendNodes.remove(BE);
 				}
@@ -154,7 +155,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}else {
 			BackendNode BE = getBE();
 			ClientTransportPair cp = BE.getTransportPair();
-			List<String> hash = new ArrayList<String>();
+			List<Boolean> hash = new ArrayList<Boolean>();
 			if (cp != null) {
 				BcryptService.AsyncClient async = cp.getClient();
 				TNonblockingTransport transport = cp.getTransport();
@@ -164,7 +165,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("BE doing work");
 					hash = client.checkPasswordComp(password, logRounds);
 					transport.close();
-				} catch (TTransportException t) {
+				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
 					backendNodes.remove(BE);
 				}
@@ -202,8 +203,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			BcryptService.AsyncClient client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
 			TransportPair pair = new TransportPair(client, transport);
 
-			BackendNode BENode = new BackendNode(BEHost, BEPort, pair, false);// set backend node to busy
-			backendNodes.add(BENode);
+			BackendNode BE = new BackendNode(BEHost, BEPort, pair, false);// set backend node to busy
+			backendNodes.add(BE);
 		} catch (Exception e) {
 		}
 	}
