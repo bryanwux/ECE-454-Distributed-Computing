@@ -48,14 +48,12 @@ class BackendNode{
 	private int BEPort;
 	private int RequestNum;
 	private TransportPair ClientTransportPair;
-	private boolean isBusy;
 
-	BackendNode(String BEHost, int BEPort, TransportPair ClientTransportPair, boolean isBusy){
+	BackendNode(String BEHost, int BEPort, TransportPair ClientTransportPair){
 		this.BEHost = BEHost;
 		this.BEPort = BEPort;
 		//this.RequestNum = 0;
 		this.ClientTransportPair=ClientTransportPair;
-		this.isBusy = isBusy;
 	}
 
 	public String getBEHost(){
@@ -84,15 +82,11 @@ class BackendNode{
 		return this.ClientTransportPair;
 	}
 
-	public synchronized boolean isBusy() {
-		return this.isBusy;
-	}
-
 }
 
 public class BcryptServiceHandler implements BcryptService.Iface {
     //private ExecutorService executor;
-	public static List<BackendNode> backendNodes;
+	public static List<BackendNode> idleNodes;
 
     public BcryptServiceHandler(){
     	//executor = Executors.newFixedThreadPool(32);
@@ -100,20 +94,22 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	}
 
 	public synchronized BackendNode getBE(){
-    	for(BackendNode be : backendNodes) {
-			if (!be.isBusy()){
-				return be;
-			}
+    	if(!idleNodes.isEmpty()){
+    		return idleNodes[0];
 		}
     	return null;
 	}
 
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
-		if(backendNodes.isEmpty()){
+		if(idleNodes.isEmpty()){
 			return hashPasswordComp(password, logRounds);
 		}else {
 			BackendNode BE = getBE();
+			if(BE==null){
+				return hashPasswordComp(password, logRounds);
+			}
+			idleNodes.remove(BE)
 			TransportPair cp = BE.getTransportPair();
 			List<String> hash = new ArrayList<String>();
 			if (cp != null) {
@@ -124,9 +120,9 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("BE doing work");
 					hash = async.hashPasswordComp(password, logRounds);
 					transport.close();
+					idleNodes.add(BE);
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
-					backendNodes.remove(BE);
 				}
 			}
 			return hash;
@@ -157,10 +153,14 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
 	{
-		if(backendNodes.isEmpty()){
+		if(idleNodes.isEmpty()){
 			return checkPasswordComp(password, hash);
 		}else {
 			BackendNode BE = getBE();
+			if(BE==null){
+				return checkPasswordComp(password, hash);
+			}
+			idleNodes.remove(BE);
 			TransportPair cp = BE.getTransportPair();
 			List<Boolean> check = new ArrayList<Boolean>();
 			if (cp != null) {
@@ -171,9 +171,9 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("BE doing work");
 					check = async.checkPasswordComp(password, hash);
 					transport.close();
+					idleNodes.add(BE);
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
-					backendNodes.remove(BE);
 				}
 			}
 			return check;
@@ -213,8 +213,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			TransportPair pair = new TransportPair(client, transport);
 
-			BackendNode BE = new BackendNode(BEHost, BEPort, pair, false);// set backend node to busy
-			backendNodes.add(BE);
+			BackendNode BE = new BackendNode(BEHost, BEPort, pair);// set backend node to idle
+			idleNodes.add(BE);
 		} catch (Exception e) {
 		}
 	}
