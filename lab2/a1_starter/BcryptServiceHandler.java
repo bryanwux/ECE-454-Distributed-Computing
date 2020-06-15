@@ -46,7 +46,7 @@ class BackendNode{
 		this.BEHost = BEHost;
 		this.BEPort = BEPort;
 		//this.RequestNum = 0;
-		this.ClientTransport=ClientTransport;
+		this.ClientTransportPair=ClientTransportPair;
 		this.isBusy = isBusy;
 	}
 
@@ -73,7 +73,7 @@ class BackendNode{
 //	}
 
 	public synchronized TransportPair getTransportPair(){
-		return this.ClientTransport;
+		return this.ClientTransportPair;
 	}
 
 	public synchronized boolean isBusy() {
@@ -103,7 +103,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
 		if(backendNodes.isEmpty()){
-			return hashPasswordComp(password, hash);
+			return hashPasswordComp(password, logRounds);
 		}else {
 			BackendNode BE = getBE();
 			ClientTransportPair cp = BE.getTransportPair();
@@ -111,11 +111,10 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			if (cp != null) {
 				BcryptService.AsyncClient async = cp.getClient();
 				TNonblockingTransport transport = cp.getTransport();
-				async.checkPasswordComp(password, logRounds);
 				try {
 					transport.open();
 					System.out.println("BE doing work");
-					hash = client.hashPasswordComp(password, logRounds);
+					hash = async.hashPasswordComp(password, logRounds);
 					transport.close();
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
@@ -155,22 +154,21 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}else {
 			BackendNode BE = getBE();
 			ClientTransportPair cp = BE.getTransportPair();
-			List<Boolean> hash = new ArrayList<Boolean>();
+			List<Boolean> check = new ArrayList<Boolean>();
 			if (cp != null) {
 				BcryptService.AsyncClient async = cp.getClient();
 				TNonblockingTransport transport = cp.getTransport();
-				async.checkPasswordComp(password, hash);
 				try {
 					transport.open();
 					System.out.println("BE doing work");
-					hash = client.checkPasswordComp(password, logRounds);
+					check = async.checkPasswordComp(password, hash);
 					transport.close();
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
 					backendNodes.remove(BE);
 				}
 			}
-			return hash;
+			return check;
 		}
 	}
 
