@@ -206,7 +206,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 //			clientManager = new TAsyncClientManager();
 //			transport = new TNonblockingSocket(BEHost, BEPort);
 
-			TSocket sock = new TSocket(server.beHost, server.bePort);
+			TSocket sock = new TSocket(BEHost, BEPort);
 			TTransport transport = new TFramedTransport(sock);
 			TProtocol protocol = new TBinaryProtocol(transport);
 			BcryptService.Client client = new BcryptService.Client(protocol);
