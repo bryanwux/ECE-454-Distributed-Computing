@@ -72,7 +72,6 @@ class BackendNode{
 public class BcryptServiceHandler implements BcryptService.Iface {
     //private ExecutorService executor;
 	public static List<BackendNode> idleNodes;
-	//public static int beNum=0;
     public BcryptServiceHandler(){
     	//executor = Executors.newFixedThreadPool(32);
     	idleNodes=new CopyOnWriteArrayList<BackendNode>();
@@ -92,10 +91,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			idleNodes.add(BE);
 		}
 	}
-
-//	public synchronized void modifyBECount(int num){
-//		beNum+=num;
-//	}
 
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
@@ -126,12 +121,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
-//					modifyBECount(-1);
-//					//if all BEs are disconnected
-//					if(beNum==0){
-//						System.out.println("FE doing work");
-//						return hashPasswordComp(password, logRounds);
-//					}
+					System.out.println("FE doing work");
+					return hashPasswordComp(password, logRounds);
 				}
 			}
 		}
@@ -188,12 +179,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
-//					modifyBECount(-1);
-//					//if all BEs are disconnected
-//					if(beNum==0){
-//						System.out.println("FE doing work");
-//						return checkPasswordComp(password, hash);
-//					}
+					System.out.println("FE doing work");
+					return checkPassword(password, hash);
 				}
 			}
 		}
@@ -235,7 +222,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			BackendNode BE = new BackendNode(BEHost, BEPort, pair);// set backend node to idle
 			idleNodes.add(BE);
-			//modifyBECount(1);
 			System.out.println(idleNodes.size() + " BE nodes in list");
 		} catch (Exception e) {
 		}
