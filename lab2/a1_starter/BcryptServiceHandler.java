@@ -175,7 +175,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			//if all resources are locked, and the thread gets none, wait
 			if(BE==null){
 				if(idleNodes.isEmpty()){
-					return hashPasswordComp(password, logRounds);
+					return checkPassword(password, hash);
 				}
 				continue;
 			}
