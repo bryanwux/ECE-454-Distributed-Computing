@@ -132,8 +132,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
-					System.out.println("FE doing work");
-					return hashPasswordComp(password, logRounds);
+					continue;
 				}
 			}
 		}
@@ -193,8 +192,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					offload=true;
 				} catch (TTransportException e) {
 					System.out.println("Failed connect to target BE, drop it.");
-					System.out.println("FE doing work");
-					return checkPassword(password, hash);
+					continue;
 				}
 			}
 		}
