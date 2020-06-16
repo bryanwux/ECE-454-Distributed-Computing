@@ -94,6 +94,13 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
+		if (logRounds < 4 || logRounds > 16) {
+			throw new IllegalArgument("Bad logRounds!");
+		}
+		if (password.isEmpty()) {
+			throw new IllegalArgument("Empty passwords!");
+		}
+
 		if(idleNodes.isEmpty()){
 			System.out.println("FE doing work");
 			return hashPasswordComp(password, logRounds);
@@ -135,13 +142,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public List<String> hashPasswordComp(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
-		if (logRounds < 4 || logRounds > 16) {
-			throw new IllegalArgument("Bad logRounds!");
-		}
-		if (password.isEmpty()) {
-			throw new IllegalArgument("Empty passwords!");
-		}
-
 		try {
 			List<String> ret = new ArrayList<>();
 			for(String onePwd: password){
@@ -157,6 +157,13 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
 	{
+		if (password.isEmpty()) {
+			throw new IllegalArgument("Empty list of passwords");
+		}
+		if (hash.isEmpty()) {
+			throw new IllegalArgument("Empty list of hashes");
+		}
+
 		if(idleNodes.isEmpty()){
 			System.out.println("FE doing work");
 			return checkPasswordComp(password, hash);
