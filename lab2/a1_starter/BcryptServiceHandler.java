@@ -101,10 +101,14 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		boolean offload=false;
 		List<String> hash = new ArrayList<String>();
 		while(!offload) {
+
 			BackendNode BE = getBE();
 
 			//if all resources are locked, and the thread gets none, wait
 			if(BE==null){
+				if(idleNodes.isEmpty()){
+					return hashPasswordComp(password, logRounds);
+				}
 				continue;
 			}
 
@@ -163,6 +167,9 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			BackendNode BE = getBE();
 			//if all resources are locked, and the thread gets none, wait
 			if(BE==null){
+				if(idleNodes.isEmpty()){
+					return hashPasswordComp(password, logRounds);
+				}
 				continue;
 			}
 
