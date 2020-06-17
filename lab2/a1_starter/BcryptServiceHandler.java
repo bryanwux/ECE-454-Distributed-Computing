@@ -287,6 +287,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 						offload = true;
 					} catch (Exception e) {
 						System.out.println("Something wrong happened");
+						e.printStackTrace();
 						continue;
 					}
 				}
@@ -330,6 +331,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 							offload = true;
 						} catch (Exception e) {
 							System.out.println("Something wrong happened");
+							e.printStackTrace();
 							continue;
 						}
 					}
