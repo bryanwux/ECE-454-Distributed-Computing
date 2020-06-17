@@ -6,31 +6,27 @@ import java.util.concurrent.*;
 
 import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.transport.*;
 import org.mindrot.jbcrypt.BCrypt;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TTransportFactory;
-import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.async.AsyncMethodCallback;
-
+import org.apache.thrift.async.TAsyncClientManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.BasicConfigurator;
 
 class TransportPair{
-	private BcryptService.Client client;
-	private TTransport transport;
+	private BcryptService.AsyncClient client;
+	private TNonblockingTransport transport;
 
-	public TransportPair(BcryptService.Client client, TTransport transport){
+	public TransportPair(BcryptService.AsyncClient client, TNonblockingTransport transport){
 		this.client = client;
 		this.transport = transport;
 	}
 
-	public BcryptService.Client getClient(){
+	public BcryptService.AsyncClient getClient(){
 		return this.client;
 	}
 
@@ -265,19 +261,16 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	}
 
 	public void BENodeHandler(String BEHost, int BEPort) throws IllegalArgument, org.apache.thrift.TException {
-		try {
-			/*TProtocolFactory protocolFactory;
-			TAsyncClientManager clientManager;
-			TNonblockingTransport transport;
 
-			protocolFactory = new TCompactProtocol.Factory();
+		TProtocolFactory protocolFactory;
+		TAsyncClientManager clientManager;
+		TNonblockingTransport transport;
+    	try {
+			protocolFactory = new TBinaryProtocol.Factory();
 			clientManager = new TAsyncClientManager();
-			transport = new TNonblockingSocket(BEHost, BEPort);*/
+			transport = new TNonblockingSocket(BEHost, BEPort);
 
-			TSocket sock = new TSocket(BEHost, BEPort);
-			TTransport transport = new TFramedTransport(sock);
-			TProtocol protocol = new TBinaryProtocol(transport);
-			BcryptService.Client client = new BcryptService.Client(protocol);
+			BcryptService.AsyncClient client = new BcryptService.AsyncClient(protocolFactory, clientManager, transport);
 
 			TransportPair pair = new TransportPair(client, transport);
 
