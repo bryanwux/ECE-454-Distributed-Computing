@@ -4,6 +4,7 @@ import java.util.List;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import java.util.concurrent.*;
 
+import org.apache.thrift.async.AsyncMethodCallback;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -15,6 +16,7 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.async.AsyncMethodCallback;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.BasicConfigurator;
@@ -225,6 +227,42 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			throw new IllegalArgument(e.getMessage());
 		}
     }
+
+	private class hashCallback implements AsyncMethodCallback<List<String>>{
+		public CountDownLatch latch;
+		public List<String> hash;
+
+		public hashCallback(){
+			latch = new CountDownLatch(1);
+		}
+		public void onComplete(List<String> response){
+			hash = response;
+			latch.countDown();
+		}
+
+		public void onError(Exception e){
+			e.printStackTrace();
+			latch.countDown();
+		}
+	}
+
+	private class checkCallback implements AsyncMethodCallback<List<Boolean>>{
+		public CountDownLatch latch;
+		public List<Boolean> res;
+
+		public checkCallback(){
+			latch = new CountDownLatch(1);
+		}
+		public void onComplete(List<Boolean> response){
+			res = response;
+			latch.countDown();
+		}
+
+		public void onError(Exception e){
+			e.printStackTrace();
+			latch.countDown();
+		}
+	}
 
 	public void BENodeHandler(String BEHost, int BEPort) throws IllegalArgument, org.apache.thrift.TException {
 		try {
