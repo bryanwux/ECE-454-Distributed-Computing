@@ -48,13 +48,13 @@ public class BENode {
 		sargs.protocolFactory(new TBinaryProtocol.Factory());
 		sargs.transportFactory(new TFramedTransport.Factory());
 		sargs.processorFactory(new TProcessorFactory(processor));
-		sargs.maxWorkerThreads(8);
+		sargs.maxWorkerThreads(64);
 
 		TServer server = new THsHaServer(sargs);
 		server.serve();
     }
 
-	private static void BEFEConnector(String BEHost, int BEPort, String FEHost, int FEPort){
+	private static void BEFEConnector(String BEHost, int BEPort, String FEHost, int FEPort) throws InterruptedException{
 		// Establish connection between BE and FE
 
 		TSocket sock = new TSocket(FEHost, FEPort);
@@ -68,8 +68,13 @@ public class BENode {
 				isConnected = true;
 				FENode.BENodeHandler(BEHost, BEPort);
 				transport.close();
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				float wait = 0.1f;
+				Thread.sleep((long)wait * 1000);
+				log.info("Couldn't connect to FE Node. Try again in " + wait + " secs");
+			}
 		}
+		log.info("Successfully connected to FE node " + FEHost + "on port" + FEPort);
 	}
 
     static String getHostName()
