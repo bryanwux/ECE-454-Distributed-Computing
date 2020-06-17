@@ -7,11 +7,6 @@ import java.util.concurrent.*;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.mindrot.jbcrypt.BCrypt;
 
-//import org.apache.thrift.async.TAsyncClientManager;
-//import org.apache.thrift.protocol.TCompactProtocol;
-//import org.apache.thrift.protocol.TProtocolFactory;
-//import org.apache.thrift.transport.TNonblockingSocket;
-//import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -19,7 +14,6 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TTransportFactory;
-import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.Iterator;
@@ -208,7 +202,11 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			for(int i = 0; i < password.size(); i++){
 				String onePwd = password.get(i);
 				String oneHash = hash.get(i);
-				ret.add(BCrypt.checkpw(onePwd, oneHash));
+				try{
+					ret.add(BCrypt.checkpw(onePwd, oneHash));
+				}catch(Exception e){
+					ret.add(false)
+				}
 			}
 
 			return ret;
@@ -219,13 +217,6 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public void BENodeHandler(String BEHost, int BEPort) throws IllegalArgument, org.apache.thrift.TException {
 		try {
-//			TProtocolFactory protocolFactory;
-//			TAsyncClientManager clientManager;
-//			TNonblockingTransport transport;
-//
-//			protocolFactory = new TCompactProtocol.Factory();
-//			clientManager = new TAsyncClientManager();
-//			transport = new TNonblockingSocket(BEHost, BEPort);
 
 			TSocket sock = new TSocket(BEHost, BEPort);
 			TTransport transport = new TFramedTransport(sock);
