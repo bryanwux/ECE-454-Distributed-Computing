@@ -145,7 +145,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 						continue;
 					}
 					offload = true;
-				} catch (TTransportException e) {
+				} catch (Exception e) {
 					System.out.println("Something wrong happened");
 					continue;
 				}
@@ -204,7 +204,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 						continue;
 					}
 					offload=true;
-				} catch (TTransportException e) {
+				} catch (Exception e) {
 					System.out.println("Something wrong happened");
 					continue;
 				}
