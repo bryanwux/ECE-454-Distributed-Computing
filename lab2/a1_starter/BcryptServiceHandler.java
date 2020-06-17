@@ -107,6 +107,21 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	}
 
+	public void hashPasswordFE(List<String> password, short logRounds, hashCallback callback){
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					List<String> resultHashes = BcryptServiceHandler.hashPasswordComp(password, logRounds);
+					callback.onComplete(resultHashes);
+				} catch (Exception e) {
+					callback.onError(e);
+				}
+			}
+		}).start();
+	}
+
+
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
 		errorCheckingHashPassword(password, logRounds);
@@ -154,7 +169,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		return callback.hash;
 	}
 
-	public List<String> hashPasswordComp(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
+	public static List<String> hashPasswordComp(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
 		try {
 			List<String> ret = new ArrayList<>();
