@@ -16,8 +16,8 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TTransportException;
 
-import java.util.Iterator;
-import java.util.Map;
+import org.apache.log4j.Logger;
+import org.apache.log4j.BasicConfigurator;
 
 class TransportPair{
 	private BcryptService.Client client;
@@ -65,6 +65,7 @@ class BackendNode{
 
 public class BcryptServiceHandler implements BcryptService.Iface {
     //private ExecutorService executor;
+	static Logger log;
 	public static List<BackendNode> idleNodes;
     public BcryptServiceHandler(){
     	//executor = Executors.newFixedThreadPool(32);
@@ -86,7 +87,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}
 	}
 
-	public static void errorChecking(List<String> password, short logRounds)throws IllegalArgument, org.apache.thrift.TException
+	public static void errorCheckingHashPassword(List<String> password, short logRounds)throws IllegalArgument, org.apache.thrift.TException
 	{
 		if (logRounds < 4 || logRounds > 30) {
 			throw new IllegalArgument("Bad logRounds!");
@@ -96,9 +97,21 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}
 
 	}
+
+	public static void errorCheckingCheckPassword(List<String> password, List<String> hashes)throws IllegalArgument, org.apache.thrift.TException
+	{
+		if (password.size() != hashes.size()) {
+			throw new IllegalArgument("Password list and hash list must have the same size!");
+		}
+		if (password.isEmpty() || hashes.isEmpty()) {
+			throw new IllegalArgument("Empty passwords!");
+		}
+
+	}
+
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
-		errorChecking(password, logRounds)
+		errorCheckingHashPassword(password, logRounds);
 
 		if(idleNodes.isEmpty()){
 			System.out.println("FE doing work");
@@ -155,12 +168,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
 	{
-		if (password.isEmpty()) {
-			throw new IllegalArgument("Empty list of passwords");
-		}
-		if (hash.isEmpty()) {
-			throw new IllegalArgument("Empty list of hashes");
-		}
+		errorCheckingCheckPassword(password, hash);
 
 		if(idleNodes.isEmpty()){
 			System.out.println("FE doing work");
