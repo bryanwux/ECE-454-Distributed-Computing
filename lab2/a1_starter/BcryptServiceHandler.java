@@ -133,16 +133,17 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
-				try {
-					BcryptService.AsyncClient async = cp.getClient();
-					System.out.println("BE "+BE.toString()+" doing work");
-					async.hashPasswordComp(password, logRounds, callback);
+				BcryptService.AsyncClient async = cp.getClient();
+				System.out.println("BE "+BE.toString()+" doing work");
+				async.hashPasswordComp(password, logRounds, callback);
+				callback.latch.await();
+				if(callback.res != null){
 					putBE(BE);
-					offload=true;
-				} catch (TTransportException e) {
+				}else{
 					System.out.println("Failed connect to target BE, drop it.");
 					continue;
 				}
+				offload=true;
 			}
 		}
 		return callback.hash;
@@ -186,16 +187,17 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
-				try {
-					BcryptService.AsyncClient async = cp.getClient();
-					System.out.println("BE "+BE.toString()+" doing work");
-					async.checkPasswordComp(password, hash, callback);
+				BcryptService.AsyncClient async = cp.getClient();
+				System.out.println("BE "+BE.toString()+" doing work");
+				async.checkPasswordComp(password, hash, callback);
+				callback.latch.await();
+				if(callback.res != null){
 					putBE(BE);
-					offload=true;
-				} catch (TTransportException e) {
+				}else{
 					System.out.println("Failed connect to target BE, drop it.");
 					continue;
 				}
+				offload=true;
 			}
 		}
 		return callback.res;
