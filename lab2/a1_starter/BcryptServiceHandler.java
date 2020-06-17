@@ -86,14 +86,19 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}
 	}
 
-	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
+	public static void errorChecking(List<String> password, short logRounds)throws IllegalArgument, org.apache.thrift.TException
 	{
-		if (logRounds < 4 || logRounds > 16) {
+		if (logRounds < 4 || logRounds > 30) {
 			throw new IllegalArgument("Bad logRounds!");
 		}
 		if (password.isEmpty()) {
 			throw new IllegalArgument("Empty passwords!");
 		}
+
+	}
+	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
+	{
+		errorChecking(password, logRounds)
 
 		if(idleNodes.isEmpty()){
 			System.out.println("FE doing work");
@@ -229,6 +234,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			idleNodes.add(BE);
 			System.out.println(idleNodes.size() + " BE nodes in list");
 		} catch (Exception e) {
+			log.error("Problem in connecting to FE node " + e);
+			throw new IllegalArgument(e.getMessage());
 		}
 	}
 }
