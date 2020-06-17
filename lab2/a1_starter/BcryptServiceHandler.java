@@ -218,7 +218,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				try{
 					ret.add(BCrypt.checkpw(onePwd, oneHash));
 				}catch(Exception e){
-					ret.add(false)
+					ret.add(false);
 				}
 			}
 
@@ -266,6 +266,13 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public void BENodeHandler(String BEHost, int BEPort) throws IllegalArgument, org.apache.thrift.TException {
 		try {
+			/*TProtocolFactory protocolFactory;
+			TAsyncClientManager clientManager;
+			TNonblockingTransport transport;
+
+			protocolFactory = new TCompactProtocol.Factory();
+			clientManager = new TAsyncClientManager();
+			transport = new TNonblockingSocket(BEHost, BEPort);*/
 
 			TSocket sock = new TSocket(BEHost, BEPort);
 			TTransport transport = new TFramedTransport(sock);
