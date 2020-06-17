@@ -224,7 +224,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("Await fail");
 				}
 				if(c.hash != null){
-					result.add(c.hash);
+					result.addAll(c.hash);
 				}else{
 					idleNodes.add(c.BE);
 					return hashPasswordComp(password,logRounds);
@@ -336,7 +336,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				}
 			}
 
-			List<String> result = new ArrayList<>();
+			List<Boolean> result = new ArrayList<>();
 			for(checkCallback c:callbacks){
 				try{
 					c.latch.await();
@@ -344,7 +344,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					System.out.println("Await fail");
 				}
 				if(c.res != null){
-					result.add(c.res);
+					result.addAll(c.res);
 				}else{
 					idleNodes.add(c.BE);
 					return checkPasswordComp(password,hash);
