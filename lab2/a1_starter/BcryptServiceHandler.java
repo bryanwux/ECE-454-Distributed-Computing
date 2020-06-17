@@ -137,7 +137,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				System.out.println("BE "+BE.toString()+" doing work");
 				async.hashPasswordComp(password, logRounds, callback);
 				callback.latch.await();
-				if(callback.res != null){
+				if(callback.hash != null){
 					putBE(BE);
 				}else{
 					System.out.println("Failed connect to target BE, drop it.");
