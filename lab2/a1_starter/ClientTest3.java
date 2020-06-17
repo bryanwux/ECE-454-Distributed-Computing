@@ -14,7 +14,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.THsHaServer;
 import org.apache.thrift.transport.*;
 
-public class YJClient {
+public class ClientTest3 {
     static Logger log = Logger.getLogger(BENode.class.getName());
     static long totalTime = 0;
 

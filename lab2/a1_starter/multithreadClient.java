@@ -12,7 +12,7 @@ import org.apache.thrift.transport.TTransportFactory;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class MultiThreadClient {
+public class multiThreadClient {
     static int counter = 10;
     static CountDownLatch latch = new CountDownLatch(counter);
 

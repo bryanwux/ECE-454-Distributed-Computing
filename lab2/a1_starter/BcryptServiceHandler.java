@@ -131,7 +131,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
-				BcryptService.Client async = cp.getClient();
+				BcryptService.AsyncClient async = cp.getClient();
 				TTransport transport = cp.getTransport();
 				try {
 					transport.open();
@@ -186,7 +186,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
-				BcryptService.Client async = cp.getClient();
+				BcryptService.AsyncClient async = cp.getClient();
 				TTransport transport = cp.getTransport();
 				try {
 					transport.open();
