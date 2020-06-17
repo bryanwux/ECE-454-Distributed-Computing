@@ -115,8 +115,10 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			System.out.println("FE doing work");
 			return hashPasswordComp(password, logRounds);
 		}
+
 		boolean offload=false;
-		List<String> hash = new ArrayList<String>();
+		//List<String> hash = new ArrayList<String>();
+		hashCallback callback = new hashCallback();
 		while(!offload) {
 
 			BackendNode BE = getBE();
@@ -131,13 +133,10 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
-				BcryptService.AsyncClient async = cp.getClient();
-				TTransport transport = cp.getTransport();
 				try {
-					transport.open();
-					System.out.println("BE "+BE.toString()+"doing work");
-					hash = async.hashPasswordComp(password, logRounds);
-					transport.close();
+					BcryptService.AsyncClient async = cp.getClient();
+					System.out.println("BE "+BE.toString()+" doing work");
+					async.hashPasswordComp(password, logRounds, callback);
 					putBE(BE);
 					offload=true;
 				} catch (TTransportException e) {
@@ -146,7 +145,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				}
 			}
 		}
-		return hash;
+		return callback.hash;
 	}
 
 	public List<String> hashPasswordComp(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
@@ -173,7 +172,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			return checkPasswordComp(password, hash);
 		}
 		boolean offload=false;
-		List<Boolean> check = new ArrayList<Boolean>();
+		//List<Boolean> check = new ArrayList<Boolean>();
+		checkCallback callback = new checkCallback();
 		while(!offload) {
 			BackendNode BE = getBE();
 			//if all resources are locked, and the thread gets none, wait
@@ -186,13 +186,10 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			TransportPair cp = BE.getTransportPair();
 			if (cp != null) {
-				BcryptService.AsyncClient async = cp.getClient();
-				TTransport transport = cp.getTransport();
 				try {
-					transport.open();
-					System.out.println("BE "+BE.toString()+"doing work");
-					check = async.checkPasswordComp(password, hash);
-					transport.close();
+					BcryptService.AsyncClient async = cp.getClient();
+					System.out.println("BE "+BE.toString()+" doing work");
+					async.checkPasswordComp(password, hash, callback);
 					putBE(BE);
 					offload=true;
 				} catch (TTransportException e) {
@@ -201,7 +198,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				}
 			}
 		}
-		return check;
+		return callback.res;
 	}
 
     public List<Boolean> checkPasswordComp(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
