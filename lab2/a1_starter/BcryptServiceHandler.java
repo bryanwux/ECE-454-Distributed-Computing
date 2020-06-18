@@ -111,11 +111,11 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	}
 
 	public void hashPasswordFE(List<String> password, short logRounds, hashCallback callback){
+		BcryptServiceHandler handler = new BcryptServiceHandler();
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					BcryptServiceHandler handler = new BcryptServiceHandler();
 					List<String> resultHashes = handler.hashPasswordComp(password, logRounds);
 					callback.onComplete(resultHashes);
 				} catch (Exception e) {
@@ -126,11 +126,11 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	}
 
 	public void checkPasswordFE(List<String> password, List<String> hash, checkCallback callback){
+		BcryptServiceHandler handler = new BcryptServiceHandler();
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
 				try {
-					BcryptServiceHandler handler = new BcryptServiceHandler();
 					List<Boolean> resultHashes = handler.checkPasswordComp(password, hash);
 					callback.onComplete(resultHashes);
 				} catch (Exception e) {
@@ -292,7 +292,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				return callback.res;
 			}
 			boolean offload = false;
-			
+
 			while (!offload) {
 				BackendNode BE = getBE();
 				//if all resources are locked, and the thread gets none, wait
