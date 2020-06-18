@@ -208,7 +208,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			//assign sub task to BE
 			for(int i=0; i<subBatchNum; i++){
-				List<String> subPassword = password.subList(i*MAXBATCHSIZE, i*MAXBATCHSIZE+MAXBATCHSIZE);
+				List<String> subPassword = password.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
 				hashPasswordSub(subPassword,logRounds,callbacks);
 			}
 			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
@@ -353,7 +353,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			//assign sub task to BE
 			for(int i=0; i<subBatchNum; i++){
-				List<String> subPassword = password.subList(i*MAXBATCHSIZE, i*MAXBATCHSIZE+MAXBATCHSIZE);
+				List<String> subPassword = password.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
 				checkPasswordSub(subPassword,hash,callbacks);
 			}
 			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
