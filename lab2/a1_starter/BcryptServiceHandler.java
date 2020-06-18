@@ -125,6 +125,21 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}).start();
 	}
 
+	public void checkPasswordFE(List<String> password, List<String> hash, checkCallback callback){
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					BcryptServiceHandler handler = new BcryptServiceHandler();
+					List<Boolean> resultHashes = handler.checkPasswordComp(password, hash);
+					callback.onComplete(resultHashes);
+				} catch (Exception e) {
+					callback.onError(e);
+				}
+			}
+		}).start();
+	}
+
 
 	public List<String> hashPassword(List<String> password, short logRounds) throws IllegalArgument, org.apache.thrift.TException
 	{
@@ -179,44 +194,13 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			//assign sub task to BE
 			for(int i=0; i<subBatchNum; i++){
-				if (idleNodes.isEmpty()) {
-					System.out.println("FE doing work");
-					return hashPasswordComp(password, logRounds);
-				}
-
-				boolean offload = false;
-				hashCallback callback = new hashCallback();
-				while (!offload) {
-
-					BackendNode BE = getBE();
-					callback.BE=BE;
-					//if all resources are locked, and the thread gets none, wait
-					if (BE == null) {
-						if (idleNodes.isEmpty()) {
-							return hashPasswordComp(password, logRounds);
-						}
-						continue;
-					}
-
-					TransportPair cp = BE.getTransportPair();
-					if (cp != null) {
-						try {
-							BcryptService.AsyncClient async = cp.getClient();
-							System.out.println("BE " + BE.toString() + " doing sub work");
-							async.hashPasswordComp(password, logRounds, callback);
-							putBE(BE);
-							//add callback to worker list
-							callbacks.add(callback);
-							offload = true;
-						} catch (Exception e) {
-							System.out.println("Something wrong happened");
-							e.printStackTrace();
-							continue;
-						}
-					}
-				}
+				List<String> subPassword = password.subList(i*MAXBATCHSIZE, i*MAXBATCHSIZE+MAXBATCHSIZE);
+				hashPasswordSub(subPassword,logRounds,callbacks);
 			}
+			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
+			hashPasswordSub(last,logRounds,callbacks);
 
+			//Process results
 			List<String> result = new ArrayList<>();
 			for(hashCallback c:callbacks){
 				try{
@@ -227,11 +211,55 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				if(c.hash != null){
 					result.addAll(c.hash);
 				}else{
-					idleNodes.add(c.BE);
+					putBE(c.BE);
 					return hashPasswordComp(password,logRounds);
 				}
 			}
 			return result;
+		}
+	}
+
+	public void hashPasswordSub(List<String> password, short logRounds, List<hashCallback> callbacks) throws IllegalArgument, org.apache.thrift.TException
+	{
+		hashCallback callback = new hashCallback();
+
+		if (idleNodes.isEmpty()) {
+			System.out.println("FE doing work");
+			hashPasswordFE(password, logRounds, callback);
+			callbacks.add(callback);
+			return;
+		}
+
+		boolean offload = false;
+		while (!offload) {
+
+			BackendNode BE = getBE();
+			callback.BE=BE;
+			//if all resources are locked, and the thread gets none, wait
+			if (BE == null) {
+				if (idleNodes.isEmpty()) {
+					hashPasswordFE(password, logRounds, callback);
+					callbacks.add(callback);
+					return;
+				}
+				continue;
+			}
+
+			TransportPair cp = BE.getTransportPair();
+			if (cp != null) {
+				try {
+					BcryptService.AsyncClient async = cp.getClient();
+					System.out.println("BE " + BE.toString() + " doing sub work");
+					async.hashPasswordComp(password, logRounds, callback);
+					//add callback to worker list
+					callbacks.add(callback);
+					offload = true;
+				} catch (Exception e) {
+					System.out.println("Something wrong happened");
+					e.printStackTrace();
+					continue;
+				}
+			}
 		}
 	}
 
@@ -300,43 +328,11 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 			//assign sub task to BE
 			for(int i=0; i<subBatchNum; i++){
-				if (idleNodes.isEmpty()) {
-					System.out.println("FE doing work");
-					return checkPasswordComp(password, hash);
-				}
-
-				boolean offload = false;
-				checkCallback callback = new checkCallback();
-				while (!offload) {
-
-					BackendNode BE = getBE();
-					callback.BE=BE;
-					//if all resources are locked, and the thread gets none, wait
-					if (BE == null) {
-						if (idleNodes.isEmpty()) {
-							return checkPasswordComp(password, hash);
-						}
-						continue;
-					}
-
-					TransportPair cp = BE.getTransportPair();
-					if (cp != null) {
-						try {
-							BcryptService.AsyncClient async = cp.getClient();
-							System.out.println("BE " + BE.toString() + " doing sub work");
-							async.checkPasswordComp(password, hash, callback);
-							putBE(BE);
-							//add callback to worker list
-							callbacks.add(callback);
-							offload = true;
-						} catch (Exception e) {
-							System.out.println("Something wrong happened");
-							e.printStackTrace();
-							continue;
-						}
-					}
-				}
+				List<String> subPassword = password.subList(i*MAXBATCHSIZE, i*MAXBATCHSIZE+MAXBATCHSIZE);
+				checkPasswordSub(subPassword,hash,callbacks);
 			}
+			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
+			checkPasswordSub(last,hash,callbacks);
 
 			List<Boolean> result = new ArrayList<>();
 			for(checkCallback c:callbacks){
@@ -348,11 +344,55 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				if(c.res != null){
 					result.addAll(c.res);
 				}else{
-					idleNodes.add(c.BE);
+					putBE(c.BE);
 					return checkPasswordComp(password,hash);
 				}
 			}
 			return result;
+		}
+	}
+
+	public void checkPasswordSub (List<String> password, List<String> hash, List<checkCallback> callbacks) throws IllegalArgument, org.apache.thrift.TException {
+
+    	checkCallback callback = new checkCallback();
+
+    	if (idleNodes.isEmpty()) {
+			System.out.println("FE doing work");
+			hashPasswordFE(password, logRounds, callback);
+			callbacks.add(callback);
+			return;
+		}
+
+		boolean offload = false;
+    	while (!offload) {
+
+			BackendNode BE = getBE();
+			callback.BE = BE;
+			//if all resources are locked, and the thread gets none, wait
+			if (BE == null) {
+				if (idleNodes.isEmpty()) {
+					hashPasswordFE(password, logRounds, callback);
+					callbacks.add(callback);
+					return;
+				}
+				continue;
+			}
+
+			TransportPair cp = BE.getTransportPair();
+			if (cp != null) {
+				try {
+					BcryptService.AsyncClient async = cp.getClient();
+					System.out.println("BE " + BE.toString() + " doing sub work");
+					async.checkPasswordComp(password, hash, callback);
+					//add callback to worker list
+					callbacks.add(callback);
+					offload = true;
+				} catch (Exception e) {
+					System.out.println("Something wrong happened");
+					e.printStackTrace();
+					continue;
+				}
+			}
 		}
 	}
 
