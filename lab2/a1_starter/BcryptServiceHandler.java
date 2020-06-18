@@ -298,6 +298,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
 	{
 		//errorCheckingCheckPassword(password, hash);
+		System.out.println("Password" + password );
+		System.out.println("Hash" + hash );
 
 		if(password.size()<=MAXBATCHSIZE) {
 			if (idleNodes.isEmpty()) {
