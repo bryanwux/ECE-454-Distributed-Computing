@@ -109,8 +109,8 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}
 
 	}
-
-	public void hashPasswordFE(List<String> password, short logRounds, hashCallback callback){
+	
+	public static void hashPasswordFE(List<String> password, short logRounds, hashCallback callback){
 		BcryptServiceHandler handler = new BcryptServiceHandler();
 		new Thread(new Runnable() {
 			@Override
@@ -125,7 +125,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 		}).start();
 	}
 
-	public void checkPasswordFE(List<String> password, List<String> hash, checkCallback callback){
+	public static void checkPasswordFE(List<String> password, List<String> hash, checkCallback callback){
 		BcryptServiceHandler handler = new BcryptServiceHandler();
 		new Thread(new Runnable() {
 			@Override
