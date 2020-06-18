@@ -299,7 +299,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	{
 		//errorCheckingCheckPassword(password, hash);
 		System.out.println("Password" + password );
-		System.out.println("Hash" + hash );
+		System.out.println("Hash" + hash.toString());
 
 		if(password.size()<=MAXBATCHSIZE) {
 			if (idleNodes.isEmpty()) {
