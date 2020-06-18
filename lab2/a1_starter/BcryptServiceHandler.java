@@ -145,13 +145,16 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	{
 		errorCheckingHashPassword(password, logRounds);
 
-		hashCallback callback = new hashCallback();
 		//if(password.size()<=MAXBATCHSIZE) {
+
 			if (idleNodes.isEmpty()) {
 				System.out.println("FE doing work");
-				hashPasswordFE(password, logRounds,callback);
+				hashCallback callback = new hashCallback();
+				hashPasswordFE(password, logRounds, callback);
+				//callback.latch.await();
 				return callback.hash;
 			}
+
 
 			boolean offload = false;
 
@@ -162,6 +165,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				//if all resources are locked, and the thread gets none, wait
 				if (BE == null) {
 					if (idleNodes.isEmpty()) {
+						hashCallback callback = new hashCallback();
 						hashPasswordFE(password, logRounds,callback);
 						return callback.hash;
 					}
@@ -173,6 +177,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					try {
 						BcryptService.AsyncClient async = cp.getClient();
 						System.out.println("BE " + BE.toString() + " doing work");
+						hashCallback callback = new hashCallback();
 						async.hashPasswordComp(password, logRounds, callback);
 						callback.latch.await();
 						if (callback.hash != null) {
