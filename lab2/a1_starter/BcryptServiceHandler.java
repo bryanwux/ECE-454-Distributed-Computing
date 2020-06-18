@@ -298,11 +298,17 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
 	{
 		errorCheckingCheckPassword(password, hash);
-		checkCallback callback = new checkCallback();
-		//if(password.size()<=MAXBATCHSIZE) {
+
+		if(password.size()<=MAXBATCHSIZE) {
 			if (idleNodes.isEmpty()) {
 				System.out.println("FE doing work");
+				checkCallback callback = new checkCallback();
 				checkPasswordFE(password,hash,callback);
+				try{
+					callback.latch.await();
+				}catch(InterruptedException e){
+					e.printStackTrace();
+				}
 				return callback.res;
 			}
 			boolean offload = false;
@@ -312,6 +318,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				//if all resources are locked, and the thread gets none, wait
 				if (BE == null) {
 					if (idleNodes.isEmpty()) {
+						checkCallback callback = new checkCallback();
 						checkPasswordFE(password,hash,callback);
 						return callback.res;
 					}
@@ -321,6 +328,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				TransportPair cp = BE.getTransportPair();
 				if (cp != null) {
 					try {
+						checkCallback callback = new checkCallback();
 						BcryptService.AsyncClient async = cp.getClient();
 						System.out.println("BE " + BE.toString() + " doing work");
 						async.checkPasswordComp(password, hash, callback);
@@ -338,37 +346,37 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					}
 				}
 			}
-			return callback.res;
-//		}else{
-//			List<checkCallback> callbacks = new ArrayList<>();
-//			System.out.println("Batch too big, size: " + password.size() + ", splitting...");
-//			int subBatchNum=password.size()/MAXBATCHSIZE;
-//
-//			//assign sub task to BE
-//			for(int i=0; i<subBatchNum; i++){
-//				List<String> subPassword = password.subList(i*MAXBATCHSIZE, i*MAXBATCHSIZE+MAXBATCHSIZE);
-//				checkPasswordSub(subPassword,hash,callbacks);
-//			}
-//			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
-//			checkPasswordSub(last,hash,callbacks);
-//
-//			List<Boolean> result = new ArrayList<>();
-//			for(checkCallback c:callbacks){
-//				try{
-//					c.latch.await();
-//				} catch(InterruptedException e){
-//					System.out.println("Await fail");
-//				}
-//				if(c.res != null){
-//					result.addAll(c.res);
-//					putBE(c.BE);
-//				}else{
-//					putBE(c.BE);
-//					return checkPasswordComp(password,hash);
-//				}
-//			}
-//			return result;
-//		}
+		}else{
+			List<checkCallback> callbacks = new ArrayList<>();
+			System.out.println("Batch too big, size: " + password.size() + ", splitting...");
+			int subBatchNum=password.size()/MAXBATCHSIZE;
+
+			//assign sub task to BE
+			for(int i=0; i<subBatchNum; i++){
+				List<String> subPassword = password.subList(i*MAXBATCHSIZE, i*MAXBATCHSIZE+MAXBATCHSIZE);
+				checkPasswordSub(subPassword,hash,callbacks);
+			}
+			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
+			checkPasswordSub(last,hash,callbacks);
+
+			List<Boolean> result = new ArrayList<>();
+			for(checkCallback c:callbacks){
+				try{
+					c.latch.await();
+				} catch(InterruptedException e){
+					System.out.println("Await fail");
+				}
+				if(c.res != null){
+					result.addAll(c.res);
+					putBE(c.BE);
+				}else{
+					putBE(c.BE);
+					return checkPasswordComp(password,hash);
+				}
+			}
+			return result;
+		}
+		return null;
 	}
 
 	public void checkPasswordSub (List<String> password, List<String> hash, List<checkCallback> callbacks) throws IllegalArgument, org.apache.thrift.TException {
