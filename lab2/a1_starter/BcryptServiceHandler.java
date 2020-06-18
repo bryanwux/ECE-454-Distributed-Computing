@@ -232,6 +232,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			}
 			return result;
 		}
+		return null;
 
 	}
 
