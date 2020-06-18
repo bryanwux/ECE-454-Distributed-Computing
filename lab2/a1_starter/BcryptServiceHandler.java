@@ -99,16 +99,16 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	}
 
-//	public static void errorCheckingCheckPassword(List<String> password, List<String> hashes)throws IllegalArgument, org.apache.thrift.TException
-//	{
-//		if (password.size() != hashes.size()) {
-//			throw new IllegalArgument("Password list and hash list must have the same size!");
-//		}
-//		if (password.isEmpty() || hashes.isEmpty()) {
-//			throw new IllegalArgument("Empty passwords!");
-//		}
-//
-//	}
+	public static void errorCheckingCheckPassword(List<String> password, List<String> hashes)throws IllegalArgument, org.apache.thrift.TException
+	{
+		if (password.size() != hashes.size()) {
+			throw new IllegalArgument("Password list and hash list must have the same size!");
+		}
+		if (password.isEmpty() || hashes.isEmpty()) {
+			throw new IllegalArgument("Empty passwords!");
+		}
+
+	}
 	
 	public static void hashPasswordFE(List<String> password, short logRounds, hashCallback callback){
 		BcryptServiceHandler handler = new BcryptServiceHandler();
@@ -297,7 +297,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
 	{
-		errorCheckingCheckPassword(password, hash);
+		//errorCheckingCheckPassword(password, hash);
 
 		if(password.size()<=MAXBATCHSIZE) {
 			if (idleNodes.isEmpty()) {
