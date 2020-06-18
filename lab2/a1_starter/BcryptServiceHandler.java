@@ -99,16 +99,16 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	}
 
-	public static void errorCheckingCheckPassword(List<String> password, List<String> hashes)throws IllegalArgument, org.apache.thrift.TException
-	{
-		if (password.size() != hashes.size()) {
-			throw new IllegalArgument("Password list and hash list must have the same size!");
-		}
-		if (password.isEmpty() || hashes.isEmpty()) {
-			throw new IllegalArgument("Empty passwords!");
-		}
-
-	}
+//	public static void errorCheckingCheckPassword(List<String> password, List<String> hashes)throws IllegalArgument, org.apache.thrift.TException
+//	{
+//		if (password.size() != hashes.size()) {
+//			throw new IllegalArgument("Password list and hash list must have the same size!");
+//		}
+//		if (password.isEmpty() || hashes.isEmpty()) {
+//			throw new IllegalArgument("Empty passwords!");
+//		}
+//
+//	}
 	
 	public static void hashPasswordFE(List<String> password, short logRounds, hashCallback callback){
 		BcryptServiceHandler handler = new BcryptServiceHandler();
@@ -356,10 +356,13 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			//assign sub task to BE
 			for(int i=0; i<subBatchNum-1; ++i){
 				List<String> subPassword = password.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
-				checkPasswordSub(subPassword,hash,callbacks);
+				List<String> subhashPassword = hash.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
+				checkPasswordSub(subPassword,subhashPassword,callbacks);
 			}
 			List<String> last = password.subList((MAXBATCHSIZE-1)*subBatchNum, password.size());
-			checkPasswordSub(last,hash,callbacks);
+			List<String> lasthash = hash.subList((MAXBATCHSIZE-1)*subBatchNum, password.size());
+
+			checkPasswordSub(last,lasthash,callbacks);
 
 			List<Boolean> result = new ArrayList<>();
 			for(checkCallback c:callbacks){
