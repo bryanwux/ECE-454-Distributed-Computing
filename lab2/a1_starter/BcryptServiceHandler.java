@@ -187,13 +187,15 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 							continue;
 						}
 						offload = true;
+						return callback.hash;
 					} catch (Exception e) {
 						System.out.println("Something wrong happened");
 						continue;
 					}
+
 				}
 			}
-			return callback.hash;
+
 //		}else{
 //			List<hashCallback> callbacks = new ArrayList<>();
 //			System.out.println("Batch too big, size: " + password.size() + ", splitting...");
