@@ -358,7 +358,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
     	if (idleNodes.isEmpty()) {
 			System.out.println("FE doing work");
-			hashPasswordFE(password, logRounds, callback);
+			checkPasswordFE(password, hash, callback);
 			callbacks.add(callback);
 			return;
 		}
@@ -371,7 +371,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			//if all resources are locked, and the thread gets none, wait
 			if (BE == null) {
 				if (idleNodes.isEmpty()) {
-					hashPasswordFE(password, logRounds, callback);
+					checkPasswordFE(password, hash, callback);
 					callbacks.add(callback);
 					return;
 				}
