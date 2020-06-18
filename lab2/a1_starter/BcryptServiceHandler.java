@@ -211,7 +211,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				List<String> subPassword = password.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
 				hashPasswordSub(subPassword,logRounds,callbacks);
 			}
-			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
+			List<String> last = password.subList((MAXBATCHSIZE-1)*subBatchNum, password.size());
 			hashPasswordSub(last,logRounds,callbacks);
 
 			//Process results
@@ -358,7 +358,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				List<String> subPassword = password.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
 				checkPasswordSub(subPassword,hash,callbacks);
 			}
-			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
+			List<String> last = password.subList((MAXBATCHSIZE-1)*subBatchNum, password.size());
 			checkPasswordSub(last,hash,callbacks);
 
 			List<Boolean> result = new ArrayList<>();
