@@ -145,13 +145,18 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 	{
 		errorCheckingHashPassword(password, logRounds);
 
-		//if(password.size()<=MAXBATCHSIZE) {
+		if(password.size()<=MAXBATCHSIZE) {
 
 			if (idleNodes.isEmpty()) {
 				System.out.println("FE doing work");
 				hashCallback callback = new hashCallback();
 				hashPasswordFE(password, logRounds, callback);
-				//callback.latch.await();
+				try{
+					callback.latch.await();
+				}catch(InterruptedException e){
+					e.printStackTrace();
+				}
+
 				return callback.hash;
 			}
 
@@ -196,37 +201,38 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				}
 			}
 
-//		}else{
-//			List<hashCallback> callbacks = new ArrayList<>();
-//			System.out.println("Batch too big, size: " + password.size() + ", splitting...");
-//			int subBatchNum=password.size()/MAXBATCHSIZE;
-//
-//			//assign sub task to BE
-//			for(int i=0; i<subBatchNum; i++){
-//				List<String> subPassword = password.subList(i*MAXBATCHSIZE, i*MAXBATCHSIZE+MAXBATCHSIZE);
-//				hashPasswordSub(subPassword,logRounds,callbacks);
-//			}
-//			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
-//			hashPasswordSub(last,logRounds,callbacks);
-//
-//			//Process results
-//			List<String> result = new ArrayList<>();
-//			for(hashCallback c:callbacks){
-//				try{
-//					c.latch.await();
-//				} catch(InterruptedException e){
-//					System.out.println("Await fail");
-//				}
-//				if(c.hash != null){
-//					result.addAll(c.hash);
-//					putBE(c.BE);
-//				}else{
-//					putBE(c.BE);
-//					return hashPasswordComp(password,logRounds);
-//				}
-//			}
-//			return result;
-//		}
+		}else{
+			List<hashCallback> callbacks = new ArrayList<>();
+			System.out.println("Batch too big, size: " + password.size() + ", splitting...");
+			int subBatchNum=password.size()/MAXBATCHSIZE;
+
+			//assign sub task to BE
+			for(int i=0; i<subBatchNum; i++){
+				List<String> subPassword = password.subList(i*MAXBATCHSIZE, i*MAXBATCHSIZE+MAXBATCHSIZE);
+				hashPasswordSub(subPassword,logRounds,callbacks);
+			}
+			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
+			hashPasswordSub(last,logRounds,callbacks);
+
+			//Process results
+			List<String> result = new ArrayList<>();
+			for(hashCallback c:callbacks){
+				try{
+					c.latch.await();
+				} catch(InterruptedException e){
+					System.out.println("Await fail");
+				}
+				if(c.hash != null){
+					result.addAll(c.hash);
+					putBE(c.BE);
+				}else{
+					putBE(c.BE);
+					return hashPasswordComp(password,logRounds);
+				}
+			}
+			return result;
+		}
+
 	}
 
 	public void hashPasswordSub(List<String> password, short logRounds, List<hashCallback> callbacks) throws IllegalArgument, org.apache.thrift.TException
