@@ -210,6 +210,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				}
 				if(c.hash != null){
 					result.addAll(c.hash);
+					putBE(c.BE);
 				}else{
 					putBE(c.BE);
 					return hashPasswordComp(password,logRounds);
@@ -343,6 +344,7 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 				}
 				if(c.res != null){
 					result.addAll(c.res);
+					putBE(c.BE);
 				}else{
 					putBE(c.BE);
 					return checkPasswordComp(password,hash);
