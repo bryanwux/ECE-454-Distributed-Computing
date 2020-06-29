@@ -25,7 +25,7 @@ public class Task1 {
       for(int i=1; i<tokens.length; i++){
         if(tokens[i].isEmpty())
           continue;
-        int rating = Integer.parsetInt(ratings[i]);
+        int rating = Integer.parsetInt(tokens[i]);
         if(rating > currentMaxRating){
           currentMaxRating = rating;
           maxIndex.clear();
@@ -58,7 +58,7 @@ public class Task1 {
 //    job.setReducerClass(MovieRatingReducer.class);
 
     job.setOutputKeyClass(Text.class);
-    job.setOutputValueClass(IntWritable.class);
+    job.setOutputValueClass(Text.class);
 
 
     TextInputFormat.addInputPath(job, new Path(otherArgs[0]));
