@@ -207,11 +207,11 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 			int subBatchNum=password.size()/MAXBATCHSIZE;
 
 			//assign sub task to BE
-			for(int i=0; i<subBatchNum; i++){
+			for(int i=0; i<subBatchNum-1; ++i){
 				List<String> subPassword = password.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
 				hashPasswordSub(subPassword,logRounds,callbacks);
 			}
-			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
+			List<String> last = password.subList((MAXBATCHSIZE-1)*subBatchNum, password.size());
 			hashPasswordSub(last,logRounds,callbacks);
 
 			//Process results
@@ -297,7 +297,9 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 
 	public List<Boolean> checkPassword(List<String> password, List<String> hash) throws IllegalArgument, org.apache.thrift.TException
 	{
-		errorCheckingCheckPassword(password, hash);
+		//errorCheckingCheckPassword(password, hash);
+		System.out.println("Password" + password );
+		System.out.println("Hash" + hash.toString());
 
 		if(password.size()<=MAXBATCHSIZE) {
 			if (idleNodes.isEmpty()) {
@@ -346,18 +348,23 @@ public class BcryptServiceHandler implements BcryptService.Iface {
 					}
 				}
 			}
-		}else{
+		}
+
+		else{
 			List<checkCallback> callbacks = new ArrayList<>();
 			System.out.println("Batch too big, size: " + password.size() + ", splitting...");
 			int subBatchNum=password.size()/MAXBATCHSIZE;
 
 			//assign sub task to BE
-			for(int i=0; i<subBatchNum; i++){
+			for(int i=0; i<subBatchNum-1; ++i){
 				List<String> subPassword = password.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
-				checkPasswordSub(subPassword,hash,callbacks);
+				List<String> subhashPassword = hash.subList(i*MAXBATCHSIZE, (i+1)*subBatchNum);
+				checkPasswordSub(subPassword,subhashPassword,callbacks);
 			}
-			List<String> last = password.subList((subBatchNum-1)*MAXBATCHSIZE, password.size());
-			checkPasswordSub(last,hash,callbacks);
+			List<String> last = password.subList((MAXBATCHSIZE-1)*subBatchNum, password.size());
+			List<String> lasthash = hash.subList((MAXBATCHSIZE-1)*subBatchNum, password.size());
+
+			checkPasswordSub(last,lasthash,callbacks);
 
 			List<Boolean> result = new ArrayList<>();
 			for(checkCallback c:callbacks){
