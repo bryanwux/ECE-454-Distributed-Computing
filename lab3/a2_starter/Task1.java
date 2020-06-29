@@ -53,6 +53,13 @@ public class Task1 {
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
     
     // add code here
+    job.setMapperClass(MovieRatingMapper.class);
+//    job.setCombinerClass(MovieRatingCombiner.class);
+//    job.setReducerClass(MovieRatingReducer.class);
+
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+
 
     TextInputFormat.addInputPath(job, new Path(otherArgs[0]));
     TextOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
