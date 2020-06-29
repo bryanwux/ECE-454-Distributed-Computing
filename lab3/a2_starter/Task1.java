@@ -55,7 +55,7 @@ public class Task1 {
     // add code here
     job.setMapperClass(MovieRatingMapper.class);
 //    job.setCombinerClass(MovieRatingCombiner.class);
-//    job.setReducerClass(MovieRatingReducer.class);
+    job.setNumReduceTasks(0);
 
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(Text.class);
