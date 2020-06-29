@@ -22,14 +22,14 @@ public class Task1 {
       movieName.set(tokens[0]);
       int currentMaxRating = Integer.MIN_VALUE;
 
-      for(i=1, i<tokens.length,i++){
+      for(int i=1; i<tokens.length; i++){
         if(tokens[i].isEmpty())
           continue;
         int rating = Integer.parsetInt(ratings[i]);
         if(rating > currentMaxRating){
           currentMaxRating = rating;
           maxIndex.clear();
-          maxIndex.set(String.valueOf(i))
+          maxIndex.set(String.valueOf(i));
         }else if(rating == currentMaxRating){
           byte[] bytes = String.format(",%s", i).getBytes();
           maxIndex.append(bytes, 0, bytes.length);
