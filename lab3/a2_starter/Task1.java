@@ -13,8 +13,16 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 public class Task1 {
+  public static class MovieRatingMapper extends Mapper<Object, Text, Text, IntWritable>{
+    private Text movieName = new Text();
+    private Text ratings = new Text();
+    public void map(Object key, Text value, Context context) throws IOException, InterruptedException{
+    
 
-  // add code here
+    
+    }
+
+  }
 
     
     
