@@ -25,7 +25,7 @@ public class Task1 {
       for(int i=1; i<tokens.length; i++){
         if(tokens[i].isEmpty())
           continue;
-        int rating = Integer.parsetInt(tokens[i]);
+        int rating = Integer.parseInt(tokens[i]);
         if(rating > currentMaxRating){
           currentMaxRating = rating;
           maxIndex.clear();
