@@ -12,6 +12,8 @@ import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
+import javafx.scene.text.*;
+
 public class Task1 {
   public static class MovieRatingMapper extends Mapper<Object, Text, Text, IntWritable>{
     private Text movieName = new Text();
@@ -23,6 +25,10 @@ public class Task1 {
     }
 
   }
+
+
+  public static
+
 
     
     
@@ -36,6 +42,12 @@ public class Task1 {
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
     
     // add code here
+    job.setMapperClass(MovieRatingMapper.class);
+    job.setCombinerClass(MovieRatingCombiner.class);
+    job.setReducerClass(MovieRatingReducer.class);
+
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
 
     TextInputFormat.addInputPath(job, new Path(otherArgs[0]));
     TextOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
