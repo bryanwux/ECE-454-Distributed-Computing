@@ -12,17 +12,17 @@ export HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop/
 export CLASSPATH=`$HADOOP_HOME/bin/hadoop classpath`
 
 echo --- Deleting
-rm Task1.jar
-rm Task1*.class
+rm Task4.jar
+rm Task4*.class
 
 echo --- Compiling
-$JAVA_HOME/bin/javac Task1.java
+$JAVA_HOME/bin/javac Task4.java
 if [ $? -ne 0 ]; then
     exit
 fi
 
 echo --- Jarring
-$JAVA_HOME/bin/jar -cf Task1.jar Task1*.class
+$JAVA_HOME/bin/jar -cf Task4.jar Task4*.class
 
 echo --- Running
 INPUT=/a2_inputs/smalldata.txt
