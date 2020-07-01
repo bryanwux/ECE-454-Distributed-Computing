@@ -36,4 +36,4 @@ $HADOOP_HOME/bin/hdfs dfs -ls $OUTPUT
 $HADOOP_HOME/bin/hdfs dfs -cat $OUTPUT/*
 
 hdfs dfs -ls $OUTPUT
-hdfs dfs -copyToLocal $OUTPUT /home2/p99patel/outputHadoop/
+hdfs dfs -copyToLocal $OUTPUT /home/j285wu/outputHadoop/
