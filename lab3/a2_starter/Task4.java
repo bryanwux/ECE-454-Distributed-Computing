@@ -31,10 +31,28 @@ public class Task4 {
     throws IOException, InterruptedException{
       String[] tokens = value.toString().split(",");
       String title = tokens[0];
+      for (String cacheLine : cache) {
+        final String[] tokensB = cacheLine.split(",", -1);
+        final String titleB = tokensB[0];
 
+        // maintain lexicographic order between titles
+        if (titleA.compareTo(titleB) >= 0) continue;
 
-
+        int count = 0;
+        for (int i = 1; i < tokensA.length; i++) {
+            String a = tokensA[i];
+            String b = tokensB[i];
+            if (!a.isEmpty() && !b.isEmpty() && a.equals(b)) {
+                count++;
+            }
+        }
+        titlePair.set(titleA + "," + titleB);
+        similarity.set(count);
+        context.write(titlePair, similarity);
+      }
     }
+  }
+  
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     conf.set("mapreduce.output.textoutputformat.separator", ",");
