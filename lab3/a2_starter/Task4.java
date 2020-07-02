@@ -16,9 +16,9 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class Task4 {
   public static class MovieSimilarityMapper extends Mapper<Object, Text, Text, IntWritable>{
-    private Text movieName;
-    private IntWritable movieSimilarity; 
-    private List<String> cache;
+    private Text movieName = new Text();
+    private IntWritable movieSimilarity = new IntWritable(); 
+    private List<String> cache = new LinkedList<>();
   // called once at the beginning of each task
   @Override
   public void setup(Context context)
