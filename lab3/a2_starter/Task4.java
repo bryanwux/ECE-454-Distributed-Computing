@@ -42,7 +42,7 @@ public class Task4 {
 
         // maintain lexicographic order between titles
         if (titleA.compareTo(titleB) < 0)
-          int similarity = computeSimilarity(token1,token2)
+          int similarity = computeSimilarity(token1,token2);
         else
           continue;
 
