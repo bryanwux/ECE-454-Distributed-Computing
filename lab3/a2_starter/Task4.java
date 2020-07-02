@@ -41,7 +41,7 @@ public class Task4 {
         String title2 = token2[0];
 
         // maintain lexicographic order between titles
-        if (titleA.compareTo(titleB) < 0){
+        if (title1.compareTo(title2) < 0){
           int similarity = computeSimilarity(token1,token2);
           movieName.set(title1 + "," + title2);
           movieSimilarity.set(similarity);
