@@ -34,15 +34,15 @@ public class Task4 {
 
   public void map(Object key, Text value, Context context)
     throws IOException, InterruptedException{
-      String[] token1 = value.toString().split(",");
-      String title1 = token1[0];
+      String[] stringToken1 = value.toString().split(",");
+      String title1 = stringToken1[0];
       for (String c : cache) {
-        String[] token2 = c.split(",");
-        String title2 = token2[0];
+        String[] stringToken2 = c.split(",");
+        String title2 = stringToken2[0];
 
         // maintain lexicographic order between titles
         if (title1.compareTo(title2) < 0){
-          int similarity = computeSimilarity(token1,token2);
+          int similarity = computeSimilarity(stringToken1,stringToken2);
           movieName.set(title1 + "," + title2);
           movieSimilarity.set(similarity);
           context.write(movieName, movieSimilarity);
@@ -52,11 +52,11 @@ public class Task4 {
       }
     }
 
-    public int computeSimilarity(String[] token1, String[] token2){
+    public int computeSimilarity(String[] stringToken1, String[] stringToken2){
       int counter = 0;
-      for (int i=1; i<token1.length; i++){
-        String rating1 = token1[i];
-        String rating2 = token2[i];
+      for (int i=1; i<stringToken1.length; i++){
+        String rating1 = stringToken1[i];
+        String rating2 = stringToken2[i];
         if(rating1.equals(rating2) && !rating1.isEmpty() && ! rating2.isEmpty()){
           counter++;
         }
