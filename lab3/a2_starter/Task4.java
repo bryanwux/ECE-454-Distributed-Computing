@@ -23,7 +23,7 @@ public class Task4 {
   @Override
   public void setup(Context context)
     throws IOException, InterruptedException{
-      // 
+      // cache input text file
       Path cahcedInput = context.getLocalCacheFiles()[0];
       BufferedReader reader = new BufferedReader(new FileReader(cahcedInput.toString()));
       cache.clear();
@@ -41,15 +41,14 @@ public class Task4 {
         String title2 = token2[0];
 
         // maintain lexicographic order between titles
-        if (titleA.compareTo(titleB) < 0)
+        if (titleA.compareTo(titleB) < 0){
           int similarity = computeSimilarity(token1,token2);
+          movieName.set(title1 + "," + title2);
+          movieSimilarity.set(similarity);
+          context.write(movieName, movieSimilarity);
+        }
         else
           continue;
-
-      
-        titlePair.set(title1 + "," + title2);
-        similarity.set(similarity);
-        context.write(titlePair, similarity);
       }
     }
 
