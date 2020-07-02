@@ -43,6 +43,10 @@ public class Task4 {
         // maintain lexicographic order between titles
         if (title1.compareTo(title2) < 0){
           int similarity = computeSimilarity(token1,token2);
+          System.out.println(token1);
+          System.out.println(token1);
+          System.out.println(similarity);
+
           movieName.set(title1 + "," + title2);
           movieSimilarity.set(similarity);
           context.write(movieName, movieSimilarity);
