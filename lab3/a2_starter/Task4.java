@@ -32,6 +32,7 @@ public class Task4 {
         cache.add(line);
   }
 
+  // called once for each key-value pair in the input split
   public void map(Object key, Text value, Context context)
     throws IOException, InterruptedException{
       String[] stringToken1 = value.toString().split(",");
@@ -40,7 +41,7 @@ public class Task4 {
         String[] stringToken2 = c.split(",");
         String title2 = stringToken2[0];
 
-        // maintain lexicographic order between titles
+        // movie title should maintain ascending lexicographic order
         if (title1.compareTo(title2) < 0){
           int similarity = computeSimilarity(stringToken1,stringToken2);
           movieName.set(title1 + "," + title2);
@@ -51,7 +52,7 @@ public class Task4 {
           continue;
       }
     }
-
+    // compute similarity between two movies
     public int computeSimilarity(String[] stringToken1, String[] stringToken2){
       int counter = 0;
       for (int i=1; i<stringToken1.length; i++){
