@@ -17,7 +17,7 @@ object Task2 {
     // Array => RDD
     // only perform the shuffle to one node
     sc.parallelize(Array(totalRatings))
-                .repartition(1)
+                .coalesce(1)
                 .saveAsTextFile(args(1))
   }
 }
