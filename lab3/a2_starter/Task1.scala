@@ -8,15 +8,14 @@ object Task1 {
     // RDD[String]
     val textFile = sc.textFile(args(0))
     // RDD[Array[String]]
-    val line = textFile.map(line => line.split("\t"))
+    val line = textFile.map(line => line.split(","))
+    val rdd = line.flatMap(line => {
+         val movieName = line(0)
+         val ratings = line.slice(1, line.size)
+         val maxRating = ratings.max
 
-    val rdd = line.flatMap( arr=>{
-      val movieName = arr(0)
-      //val maxRatingIndex = arr(1)
-      
-    }
+        })
 
-    )
 
     // modify this code
     //val output = textFile.map(x => x)
