@@ -7,10 +7,16 @@ object Task2 {
     val sc = new SparkContext(conf)
 
     val textFile = sc.textFile(args(0))
+    val totalRatings = textFile
+                        .flatMap(_.split(",").tail)
+                        .filter(!_.isEmpty)
+                        .count()
 
     // modify this code
-    val output = textFile.map(x => x);
-    
-    output.saveAsTextFile(args(1))
+
+    // Array => RDD
+    sc.parallelize(totalRatings)
+                .repartition(1)
+                .saveAsTextFile(args(1))
   }
 }
