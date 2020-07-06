@@ -8,14 +8,18 @@ object Task1 {
     // RDD[String]
     val textFile = sc.textFile(args(0))
     // RDD[Array[String]]
-    val line = textFile.map(line => line.split(","))
-    val rdd = line.flatMap(line => {
-         val movieName = line(0)
-         val ratings = line.slice(1, line.size)
-         val maxRating = ratings.max
+    val token = textFile.map(line => line.split(","))
+    val name = movie_name = token.first()
+    val rating = token.drop(1)
+    println(rating)
+    val rating_with_index_sorted = rating.zipWithIndex.sortByKey(False).map((r,i) => (i,r))
+    println(rating_with_index_sorted)
 
-        })
+    val highest = rating_with_index_sorted.filter((i,r)=>if(r-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
 
+    println(highest)
+
+    val rdd = name.union(highest)
 
     // modify this code
     //val output = textFile.map(x => x)
