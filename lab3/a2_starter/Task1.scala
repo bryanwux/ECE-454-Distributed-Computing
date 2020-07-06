@@ -9,11 +9,11 @@ object Task1 {
     // RDD[String]
     val textFile = sc.textFile(args(0))
     // RDD[Array[String]]
-    val token = textFile.flatMap(line => line.split("\n"))
+    val token = textFile.map(line => line.split("\n"))
 
     for(line <- token){
         println(line.toString)
-        val segs = line.flatMap(x => (x: String).split(","))
+        val segs = line.map(x => x.split(","))
         println(segs.toString)
         val movie_name = segs.first()
         println(movie_name.toString)
