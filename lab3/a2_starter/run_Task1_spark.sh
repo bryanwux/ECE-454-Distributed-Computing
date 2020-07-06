@@ -41,3 +41,6 @@ time $SPARK_HOME/bin/spark-submit --master yarn --class Task1 --driver-memory 4g
 export HADOOP_ROOT_LOGGER="WARN"
 $HADOOP_HOME/bin/hdfs dfs -ls $OUTPUT
 $HADOOP_HOME/bin/hdfs dfs -cat $OUTPUT/*
+
+hdfs dfs -ls $OUTPUT
+hdfs dfs -copyToLocal $OUTPUT /home/d7gu/outputHadoop/
