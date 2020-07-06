@@ -10,12 +10,9 @@ object Task1 {
     // RDD[Array[String]]
     val token = textFile.map(line => line.split(","))
 
-    for(i <- 0 to token.length-1){println(token(i))}
-
     val movie_name = token.first()
 
-    val rating = token.zipWithIndex
-    //.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true)
+    val rating = token.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true)
     println(rating)
     //val rating_with_index_sorted = rating_t.sortByKey(False).map((r,i) => (i,r))
     //println(rating_with_index_sorted)
