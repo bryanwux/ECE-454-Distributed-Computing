@@ -2,6 +2,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 // please don't change the object name
 object Task1 {
+
   def main(args: Array[String]) {
     val conf = new SparkConf().setAppName("Task 1")
     val sc = new SparkContext(conf)
@@ -10,10 +11,17 @@ object Task1 {
     // RDD[Array[String]]
     val token = textFile.flatMap(line => line.split("\n"))
 
-    val result = token.foreach{
-        x => x.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(False).map((r,i) => (i,r)).filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
+    for(line <- token){
+        val movie_name = line.first()
+        val rating_with_index_sorted = line.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(False).map((r,i) => (i,r))
+        println(rating_with_index_sorted)
+        val highest = rating_with_index_sorted.filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
+        println(highest)
+        val result = movie_name.union(highest).collect()
+        val rdd = rdd.union(result)
     }
-    print(result)
+
+    //filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
     //val movie_name = token.first()
 
     //val rating = token.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true)
@@ -24,7 +32,7 @@ object Task1 {
 
     //println(highest)
 
-    val rdd = result
+    //val rdd = result
     //val rdd = movie_name.union(highest)
 
     // modify this code
