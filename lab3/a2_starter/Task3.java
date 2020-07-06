@@ -14,10 +14,40 @@ import org.apache.hadoop.util.GenericOptionsParser;
 
 public class Task3 {
 
-  // add code here
+  // Mapper class
+  public static class RatingPerUserMapper extends Mapper<Object, Text, IntWritable, IntWritable>{
+    private final static IntWritable one = new IntWritable(1);
+    private  IntWritable id = new IntWritable();
+
+    public void map(Object key, Text value, Context context)
+            throws IOException, InterruptedException{
+      String[] stringTokens = value.toString().split(",", -1);
+
+      for(int i=1; i<stringTokens.length; i++) {
+        if(stringTokens[i].isEmpty())
+          continue;
+        id.set(i);
+        context.write(id, one);
+      }
+    }
+  }
 
     
-    
+  // Reducer class
+  public static class RatingPerUserReducer extends Reducer<IntWritable,IntWritable,IntWritable, IntWritable>{
+    private IntWritable result=new IntWritable();
+
+    public void reduce(IntWritable key,Iterable<IntWritable> values,Context context)
+            throws IOException,InterruptedException
+    {
+      int sum=0;
+      for(IntWritable val : values){
+        sum+=val.get();
+      }
+      result.set(sum);
+      context.write(key, result);
+    }
+  }
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
     conf.set("mapreduce.output.textoutputformat.separator", ",");
@@ -28,6 +58,13 @@ public class Task3 {
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
     // add code here
+    job.setMapperClass(RatingPerUserMapper.class);
+    job.setMapOutputKeyClass(IntWritable.class);
+    job.setMapOutputValueClass(IntWritable.class);
+
+    job.setCombinerClass(RatingPerUserReducer.class);
+    job.setReducerClass(RatingPerUserReducer.class);
+
 
     TextInputFormat.addInputPath(job, new Path(otherArgs[0]));
     TextOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
