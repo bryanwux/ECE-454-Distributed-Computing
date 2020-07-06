@@ -11,12 +11,12 @@ object Task1 {
     // RDD[Array[String]]
     val token = textFile.map(line => line.split("\n")).collect
 
-    val rating_with_index_sorted = Null
+    val rating_with_index_sorted = 0
     for(line <- token){
         println(line)
         val segs = line.map(x => x.split(","))
         println(segs)
-        val movie_name = segs.first()
+        val movie_name = segs.take(1)
         println(movie_name.toString)
         rating_with_index_sorted = segs.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
         println(rating_with_index_sorted)
