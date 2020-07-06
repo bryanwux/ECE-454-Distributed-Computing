@@ -9,6 +9,9 @@ object Task1 {
     val textFile = sc.textFile(args(0))
     // RDD[Array[String]]
     val token = textFile.map(line => line.split(","))
+
+    for(i <- 0 to token.length-1){println(token(i))}
+
     val movie_name = token.first()
 
     val rating = token.zipWithIndex
