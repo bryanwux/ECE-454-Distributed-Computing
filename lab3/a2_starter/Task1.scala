@@ -12,8 +12,9 @@ object Task1 {
     val token = textFile.flatMap(line => line.split("\n"))
 
     for(line <- token){
+        println(line.toString)
         val movie_name = line.first()
-        val rating_with_index_sorted = line.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(False).map((r,i) => (i,r))
+        val rating_with_index_sorted = line.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
         println(rating_with_index_sorted)
         val highest = rating_with_index_sorted.filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
         println(highest)
