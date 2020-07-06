@@ -15,7 +15,7 @@ object Task1 {
         println(line.toString)
         val segs = line.map(x => x.split(","))
         println(segs.toString)
-        val movie_name = segs.first()
+        //val movie_name = segs.first()
         println(movie_name.toString)
         //val rating_with_index_sorted = segs.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
         //println(rating_with_index_sorted)
