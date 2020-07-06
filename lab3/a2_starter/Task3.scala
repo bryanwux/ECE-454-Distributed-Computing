@@ -11,7 +11,7 @@ object Task3 {
 
     // modify this code
 
-    def mapIdtoRating(line: String): Array[(Int)] = {
+    def mapIdtoRating(line: String): Array[(Int, Int)] = {
         val ratings = line.split(",", -1)
                           .zipWithIndex
                           .drop(1)
