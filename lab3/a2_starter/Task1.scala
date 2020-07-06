@@ -21,7 +21,7 @@ object Task1 {
         if(rating(i).toInt>best){
           user_max.clear();
           user_max+=i;
-          best=rating(i);
+          best=rating(i).toInt;
         }else if(rating(i).toInt==best){
           user_max+=i;
         }
