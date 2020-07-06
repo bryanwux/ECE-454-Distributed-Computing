@@ -13,7 +13,7 @@ object Task1 {
 
     for(line <- token){
         println(line.toString)
-        val split = line.flatMap(line => line.split(","))
+        val split = line.flatMap(x => x.split(","))
         println(split.toString)
         val movie_name = split.first()
         println(movie_name.toString)
