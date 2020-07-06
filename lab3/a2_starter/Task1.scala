@@ -11,7 +11,7 @@ object Task1 {
     val token = textFile.map(line => line.split(","))
     val movie_name = token.first()
 
-    val rating = token.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true)
+    val rating = token.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).map(f=>(f._1,f._2))
     println(rating)
     val rating_with_index_sorted = rating.sortByKey(False).map((r,i) => (i,r))
     println(rating_with_index_sorted)
