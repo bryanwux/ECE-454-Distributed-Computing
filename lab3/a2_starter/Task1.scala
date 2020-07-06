@@ -12,7 +12,7 @@ object Task1 {
     val token = textFile.map(line => line.split("\n"))
 
     for(line <- token){
-        println(line.toString)
+        println(line)
         //val segs = line.toString.map(x => x.split(","))
         //println(segs.toString)
         //val movie_name = segs.first()
