@@ -21,10 +21,10 @@ public class Task2 {
 
         public void map(Object key, Text value, Context context)
                 throws IOException, InterruptedException{
-            String[] stringTokens = value.toString().split(",");
+            String[] stringTokens = value.toString().split(",", -1);
 
             for(int i=1; i<stringTokens.length; i++) {
-                if(stringTokens[i].isEmpty())
+                if(stringTokens[i].equals(""))
                     continue;
                 context.write(NullWritable.get(), one);
             }
@@ -43,7 +43,7 @@ public class Task2 {
                 sum+=val.get();
             }
             result.set(sum);
-            context.write(key, result);
+            context.write(NullWritable.get(), result);
         }
     }
 
