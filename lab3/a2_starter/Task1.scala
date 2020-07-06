@@ -1,4 +1,5 @@
 import org.apache.spark.{SparkContext, SparkConf}
+import scala.collection.mutable.{ListBuffer}
 
 // please don't change the object name
 object Task1 {
@@ -9,22 +10,32 @@ object Task1 {
     // RDD[String]
     val textFile = sc.textFile(args(0))
     // RDD[Array[String]]
-    val token = textFile.map(line => line.split("\n")).collect
 
-    val rating_with_index_sorted = 0
-    for(line <- token){
-        println(line)
-        val segs = line.map(x => x.split(","))
-        println(segs)
-        val movie_name = segs.take(1)
-        println(movie_name.toString)
-        rating_with_index_sorted = segs.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
-        println(rating_with_index_sorted)
-        //val highest = rating_with_index_sorted.filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
-        //println(highest)
-        //val result = movie_name.union(highest).collect()
-        //val rdd = rdd.union(result)
-    }
+    val result = textFile.map(x => {
+      println(x);
+      var rating = x.split(",");
+      var movie_name = rating(0);
+      var user_max = new ListBuffer[Int]();
+      var best = -1;
+      for(i <- 1 until rating.length){
+        if(rating(i).toInt>best){
+          user_max.clear();
+          user_max+=i;
+          best=rating(i);
+        }else if(rating(i).toInt==best){
+          user_max+=i;
+        }
+      }
+      movie_name+","+user_max.mkString(",");
+    })
+
+
+    //val rating_with_index_sorted = segs.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
+    //println(rating_with_index_sorted)
+    //val highest = rating_with_index_sorted.filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
+    //println(highest)
+    //val result = movie_name.union(highest).collect()
+    //val rdd = rdd.union(result)
 
     //filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
     //val movie_name = token.first()
@@ -42,7 +53,7 @@ object Task1 {
 
     // modify this code
     //val output = textFile.map(x => x)
-    val output = rating_with_index_sorted
+    val output = result
     output.saveAsTextFile(args(1))
   }
 }
