@@ -11,17 +11,16 @@ object Task3 {
 
     // modify this code
 
-    def mapIdtoRating(line: String): Array[(Int,Int)] = {
+    def mapIdtoRating(line: String): Array[(Int)] = {
         val ratings = line.split(",", -1)
                           .zipWithIndex
                           .drop(1)
-                          
-
     }
 
-    val output = textFile.flatMap(mapIdtoRating)
-                         .reduceByKey(_+_)
-                         .map(x => x._1 + "," + x._2)
+    //val output = textFile.flatMap(mapIdtoRating)
+    //                     .reduceByKey(_+_)
+    //                     .map(x => x._1 + "," + x._2)
+    val output= textFile.flatMap(mapIdtoRating)
     output.saveAsTextFile(args(1))
   }
 }
