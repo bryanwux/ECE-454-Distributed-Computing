@@ -8,7 +8,7 @@ object Task4 {
     var movie_2=b(0);
     var similarity=0;
     for(i <- 1 until a.length){
-      if(a(i)==b(i) && a(i)!="" and b(i)!=""){
+      if(a(i)==b(i) && a(i)!="" && b(i)!=""){
         similarity+=1;
       }
     }
@@ -22,11 +22,9 @@ object Task4 {
     val textFile = sc.textFile(args(0))
 
     // modify this code
-    val output = textFile.map(x => {
-      var pairs = x.map(l => l.split(","));
-      var cross = pairs.cartesian(pairs).filter(t => t_1(0).compareTo(t_2(0))<=0);
-      var res = cross.map(x => compare(x_1,x_2));
-    });
+    val pairs = textFile.map(l => l.split(","));
+    val f = pairs.cartesian(pairs).filter(t => t._1(0).compareTo(t._2(0))<=0);
+    val output = f.cross.map(x => compare(x._1,x._2));
     
     output.saveAsTextFile(args(1))
   }
