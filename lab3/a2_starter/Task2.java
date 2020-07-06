@@ -18,8 +18,6 @@ public class Task2 {
     // Mapper class
     public static class RatingSumMapper extends Mapper<Object, Text, NullWritable, IntWritable>{
         private final static IntWritable one = new IntWritable(1);
-        private final static NullWritable key = NullWritable.get();
-
 
         public void map(Object key, Text value, Context context)
                 throws IOException, InterruptedException{
@@ -28,7 +26,7 @@ public class Task2 {
             for(int i=1; i<stringTokens.length; i++) {
                 if(stringTokens[i].isEmpty())
                     continue;
-                context.write(key, one);
+                context.write(NullWritable.get(), one);
             }
         }
     }
