@@ -17,7 +17,7 @@ object Task1 {
       var user_max = new ListBuffer[Int]();
       var best = -1;
       for(i <- 1 until rating.length){
-        if(rating(1)!="") {
+        if(rating(i)!="") {
           if(rating(i).toInt>best){
             user_max.clear();
             user_max+=i;
