@@ -13,12 +13,12 @@ object Task1 {
 
     for(line <- token){
         println(line)
-        val segs = line.flatMap(x => x.split(",")).collect
+        val segs = line.map(x => x.split(",")).collect
         println(segs)
         val movie_name = segs.first()
         println(movie_name.toString)
-        //val rating_with_index_sorted = segs.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
-        //println(rating_with_index_sorted)
+        val rating_with_index_sorted = segs.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
+        println(rating_with_index_sorted)
         //val highest = rating_with_index_sorted.filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
         //println(highest)
         //val result = movie_name.union(highest).collect()
@@ -41,7 +41,7 @@ object Task1 {
 
     // modify this code
     //val output = textFile.map(x => x)
-    val output = token
+    val output = rating_with_index_sorted
     output.saveAsTextFile(args(1))
   }
 }
