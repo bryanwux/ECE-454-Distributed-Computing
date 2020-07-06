@@ -33,6 +33,6 @@ $HADOOP_HOME/bin/hdfs dfs -copyFromLocal  /user/${USER}/
 time $HADOOP_HOME/bin/yarn jar Task1.jar Task1 -D mapreduce.map.java.opts=-Xmx4g $INPUT $OUTPUT
 
 $HADOOP_HOME/bin/hdfs dfs -ls $OUTPUT
-$HADOOP_HOME/bin/hdfs dfs -cat $OUTPUT/*
+#$HADOOP_HOME/bin/hdfs dfs -cat $OUTPUT/*
 
 
