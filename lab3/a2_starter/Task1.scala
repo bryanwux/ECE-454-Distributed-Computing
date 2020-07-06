@@ -8,19 +8,23 @@ object Task1 {
     // RDD[String]
     val textFile = sc.textFile(args(0))
     // RDD[Array[String]]
-    val token = textFile.flatMap(line => line.split(","))
-    print(token)
-    val movie_name = token.first()
+    val token = textFile.flatMap(line => line.split("\n"))
 
-    val rating = token.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true)
-    println(rating.toString)
+    val result = token.foreach{
+        x => x.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).rating_t.sortByKey(False).map((r,i) => (i,r)).rating_with_index_sorted.filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
+    }
+    print(result)
+    //val movie_name = token.first()
+
+    //val rating = token.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true)
+    //println(rating.toString)
     //val rating_with_index_sorted = rating_t.sortByKey(False).map((r,i) => (i,r))
     //println(rating_with_index_sorted)
     //val highest = rating_with_index_sorted.filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
 
     //println(highest)
 
-    val rdd = rating
+    val rdd = result
     //val rdd = movie_name.union(highest)
 
     // modify this code
