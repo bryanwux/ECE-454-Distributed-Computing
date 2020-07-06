@@ -11,6 +11,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.hadoop.io.NullWritable;
+
 
 public class Task2 {
     // Mapper class
@@ -24,7 +26,7 @@ public class Task2 {
             String[] stringTokens = value.toString().split(",");
 
             for(int i=1; i<stringTokens.length; i++) {
-                if(tokens[i].isEmpty())
+                if(stringTokens[i].isEmpty())
                     continue;
                 context.write(key, one);
             }
