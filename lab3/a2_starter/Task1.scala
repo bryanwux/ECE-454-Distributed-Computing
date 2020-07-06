@@ -13,11 +13,11 @@ object Task1 {
 
     for(line <- token){
         println(line.toString)
-        val split = line.flatMap(x => x.split(","))
-        println(split.toString)
-        val movie_name = split.first()
+        val segs = line.Map(x => x.split(","))
+        println(segs.toString)
+        val movie_name = segs.first()
         println(movie_name.toString)
-        //val rating_with_index_sorted = split.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
+        //val rating_with_index_sorted = segs.zipWithIndex.mapPartitionsWithIndex((index, it) => if (index == 0) it.drop(1) else it,preservesPartitioning = true).sortByKey(false).map((r,i) => (i,r))
         //println(rating_with_index_sorted)
         //val highest = rating_with_index_sorted.filter(f=>if(f._2-rating_with_index_sorted.first()._2==0) true else false).map((i,r)=>i)
         //println(highest)
