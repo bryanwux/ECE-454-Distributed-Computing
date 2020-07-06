@@ -12,18 +12,19 @@ object Task1 {
     // RDD[Array[String]]
 
     val result = textFile.map(x => {
-      println(x);
       var rating = x.split(",");
       var movie_name = rating(0);
       var user_max = new ListBuffer[Int]();
       var best = -1;
       for(i <- 1 until rating.length){
-        if(rating(i).toInt>best){
-          user_max.clear();
-          user_max+=i;
-          best=rating(i).toInt;
-        }else if(rating(i).toInt==best){
-          user_max+=i;
+        if(rating(i)!="") {
+          if(rating(i).toInt>best){
+            user_max.clear();
+            user_max+=i;
+            best=rating(i).toInt;
+          }else if(rating(i).toInt==best){
+            user_max+=i;
+          }
         }
       }
       movie_name+","+user_max.mkString(",");
@@ -53,6 +54,7 @@ object Task1 {
 
     // modify this code
     //val output = textFile.map(x => x)
+    println(result)
     val output = result
     output.saveAsTextFile(args(1))
   }
