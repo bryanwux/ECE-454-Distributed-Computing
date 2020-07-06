@@ -33,12 +33,12 @@ object Task1 {
 
     //println(highest)
 
-    //val rdd = token
+    //val rdd = result
     //val rdd = movie_name.union(highest)
 
     // modify this code
     //val output = textFile.map(x => x)
-    val output = rdd
+    val output = token
     output.saveAsTextFile(args(1))
   }
 }
