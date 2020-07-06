@@ -13,26 +13,29 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 public class Task2 {
+    // Mapper class
+    public static class RatingSumMapper extends Mapper<Object, Text, NullWritable, IntWritable>{
+        private final static IntWritable one = new IntWritable(1);
+        private final static NullWritable key = NullWritable.get();
 
-    public static class TokenizerMapper extends Mapper<Object, Text, IntWritable>{
-        private final static intWritable one = new IntWritable(1);
 
         public void map(Object key, Text value, Context context)
                 throws IOException, InterruptedException{
-            String[] tokens = value.toString().split(",");
+            String[] stringTokens = value.toString().split(",");
 
-            for(int i=1; i<tokens.length; i++) {
+            for(int i=1; i<stringTokens.length; i++) {
                 if(tokens[i].isEmpty())
                     continue;
-                context.write(one);
+                context.write(key, one);
             }
         }
     }
 
-    public static class IntSumReducer extends Reducer<Text,IntWritable,IntWritable>{
+    // Reducer class, basically same as word count example
+    public static class RatingSumReducer extends Reducer<NullWritable,IntWritable,NullWritable, IntWritable>{
         private IntWritable result=new IntWritable();
 
-        public void reduce(Text key,iterable<IntWritable> values,Context context)
+        public void reduce(NullWritable key,Iterable<IntWritable> values,Context context)
                 throws IOException,InterruptedException
         {
             int sum=0;
@@ -40,7 +43,7 @@ public class Task2 {
                 sum+=val.get();
             }
             result.set(sum);
-            context.write(result);
+            context.write(key, result);
         }
     }
 
@@ -53,8 +56,9 @@ public class Task2 {
 
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
-        job.setMapperClass(TokenizerMapper.class);
-        job.setReducerClass(IntSumReducer.class);
+        job.setMapperClass(RatingSumMapper.class);
+        job.setCombinerClass(RatingSumReducer.class);
+        job.setReducerClass(RatingSumReducer.class);
 
 
         TextInputFormat.addInputPath(job, new Path(otherArgs[0]));
