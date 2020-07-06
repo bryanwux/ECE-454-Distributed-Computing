@@ -12,11 +12,10 @@ object Task3 {
     // modify this code
 
     def mapIdtoRating(line: String): Array[(Int,Int)] = {
-        line.split(",", -1)
-            .zipWithIndex
-            .drop(1)
-            .filter(_.nonEmpty)
-            .map{case(_,idx) => (idx,1)}
+        val ratings = line.split(",", -1)
+                          .zipWithIndex
+                          .drop(1)
+                          
 
     }
 
