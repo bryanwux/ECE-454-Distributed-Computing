@@ -25,8 +25,8 @@ echo --- Jarring
 $JAVA_HOME/bin/jar -cf Task1.jar Task1*.class
 
 echo --- Running
-INPUT=/a2_inputs/smalldata.txt
-OUTPUT=/user/${USER}/a2_starter_code_output_hadoop/
+INPUT=/tmp/cxlei-testdata/bigdata3.in.txt
+OUTPUT=/user/${USER}/a2_t1_output_hadoop/
 
 $HADOOP_HOME/bin/hdfs dfs -rm -R $OUTPUT
 $HADOOP_HOME/bin/hdfs dfs -copyFromLocal sample_input/smalldata.txt /user/${USER}/
@@ -35,5 +35,4 @@ time $HADOOP_HOME/bin/yarn jar Task1.jar Task1 -D mapreduce.map.java.opts=-Xmx4g
 $HADOOP_HOME/bin/hdfs dfs -ls $OUTPUT
 $HADOOP_HOME/bin/hdfs dfs -cat $OUTPUT/*
 
-hdfs dfs -ls $OUTPUT
-hdfs dfs -copyToLocal $OUTPUT /home/j285wu/outputHadoop/
+
