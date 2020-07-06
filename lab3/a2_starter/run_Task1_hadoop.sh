@@ -26,7 +26,7 @@ $JAVA_HOME/bin/jar -cf Task1.jar Task1*.class
 
 echo --- Running
 INPUT=/user/j285wu/bigdata3.in.txt
-OUTPUT=/user/j285wu/bigdata3.out.txt
+OUTPUT=/user/j285wu/task1-hadoop.out.txt
 
 $HADOOP_HOME/bin/hdfs dfs -rm -R $OUTPUT
 $HADOOP_HOME/bin/hdfs dfs -copyFromLocal  /user/${USER}/
