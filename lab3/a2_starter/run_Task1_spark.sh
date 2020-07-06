@@ -43,4 +43,4 @@ $HADOOP_HOME/bin/hdfs dfs -ls $OUTPUT
 $HADOOP_HOME/bin/hdfs dfs -cat $OUTPUT/*
 
 hdfs dfs -ls $OUTPUT
-hdfs dfs -copyToLocal $OUTPUT /home/d7gu/outputHadoop/
+hdfs dfs -copyToLocal $OUTPUT /home/d7gu/outputSpark/
