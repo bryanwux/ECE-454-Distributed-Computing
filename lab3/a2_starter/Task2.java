@@ -57,9 +57,11 @@ public class Task2 {
         String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
         job.setMapperClass(RatingSumMapper.class);
+        job.setMapOutputKeyClass(NullWritable.class);
+        job.setMapOutputValueClass(IntWritable.class);
+
         job.setCombinerClass(RatingSumReducer.class);
         job.setReducerClass(RatingSumReducer.class);
-
 
         TextInputFormat.addInputPath(job, new Path(otherArgs[0]));
         TextOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
