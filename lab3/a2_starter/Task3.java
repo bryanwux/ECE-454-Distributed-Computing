@@ -26,7 +26,7 @@ public class Task3 {
 
       for(int i=1; i<stringTokens.length; i++) {
         id.set(i);
-        if(stringTokens[i].isEmpty(){
+        if(stringTokens[i].isEmpty()){
           context.write(id, zero);
         context.write(id, one);
       }
