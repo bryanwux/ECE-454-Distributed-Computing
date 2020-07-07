@@ -25,9 +25,9 @@ public class Task3 {
       String[] stringTokens = value.toString().split(",", -1);
 
       for(int i=1; i<stringTokens.length; i++) {
-        if(stringTokens[i].isEmpty())
-          context.write(id, zero);
         id.set(i);
+        if(stringTokens[i].isEmpty(){
+          context.write(id, zero);
         context.write(id, one);
       }
     }
