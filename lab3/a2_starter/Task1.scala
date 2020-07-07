@@ -10,7 +10,7 @@ object Task1 {
     val textFile = sc.textFile(args(0))
 
     val result = textFile.map(x => {
-      var rating = x.split(",");
+      var rating = x.split(",", -1);
       var movie_name = rating(0);
       var user_max = new ListBuffer[Int]();
       var best = -1;

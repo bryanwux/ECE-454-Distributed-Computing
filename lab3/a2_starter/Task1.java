@@ -20,7 +20,7 @@ public class Task1 {
         
     public void map(Object key, Text value, Context context) 
         throws IOException, InterruptedException{
-      String[] tokens = value.toString().split(",");
+      String[] tokens = value.toString().split(",", -1);
       movieName.set(tokens[0]);
       int currentMaxRating = Integer.MIN_VALUE;
 
