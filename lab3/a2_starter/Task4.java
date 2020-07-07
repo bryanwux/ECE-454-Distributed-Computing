@@ -35,10 +35,10 @@ public class Task4 {
   // called once for each key-value pair in the input split
   public void map(Object key, Text value, Context context)
     throws IOException, InterruptedException{
-      String[] stringToken1 = value.toString().split(",");
+      String[] stringToken1 = value.toString().split(",", -1);
       String title1 = stringToken1[0];
       for (String c : cache) {
-        String[] stringToken2 = c.split(",");
+        String[] stringToken2 = c.split(",", -1);
         String title2 = stringToken2[0];
 
         // movie title should maintain ascending lexicographic order
