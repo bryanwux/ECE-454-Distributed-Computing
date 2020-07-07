@@ -31,8 +31,8 @@ echo --- Jarring
 $JAVA_HOME/bin/jar -cf Task3.jar Task3*.class
 
 echo --- Running
-INPUT=/a2_inputs/smalldata.txt
-OUTPUT=/user/${USER}/a2_starter_code_output_spark/
+INPUT=/user/j285wu/bigdata3.in.txt
+OUTPUT=/user/j285wu/task3-spark.out.txt
 
 $HADOOP_HOME/bin/hdfs dfs -rm -R $OUTPUT
 #$HADOOP_HOME/bin/hdfs dfs -copyFromLocal sample_input/smalldata.txt /user/${USER}/
@@ -40,4 +40,7 @@ time $SPARK_HOME/bin/spark-submit --master yarn --class Task3 --driver-memory 4g
 
 export HADOOP_ROOT_LOGGER="WARN"
 $HADOOP_HOME/bin/hdfs dfs -ls $OUTPUT
-$HADOOP_HOME/bin/hdfs dfs -cat $OUTPUT/*
+#$HADOOP_HOME/bin/hdfs dfs -cat $OUTPUT/*
+
+#hdfs dfs -ls $OUTPUT
+#hdfs dfs -copyToLocal $OUTPUT /home/d7gu/outputSpark/
