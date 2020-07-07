@@ -15,7 +15,7 @@ object Task4 {
 
     // modify this code
     val pairs = textFile.map(l => l.split(","));
-    val f = pairs.cartesian(pairs).filter(t => t._1(0).compareTo(t._2(0))<=0);
+    val f = pairs.cartesian(pairs).filter(t => t._1(0).compareTo(t._2(0))<0);
     val output = f.map(x => {
       var movie_1=x._1(0);
       var movie_2=x._2(0);
