@@ -17,6 +17,7 @@ public class Task3 {
   // Mapper class
   public static class RatingPerUserMapper extends Mapper<Object, Text, IntWritable, IntWritable>{
     private final static IntWritable one = new IntWritable(1);
+    private final static IntWritable zero = new IntWritable(0);
     private  IntWritable id = new IntWritable();
 
     public void map(Object key, Text value, Context context)
@@ -24,10 +25,13 @@ public class Task3 {
       String[] stringTokens = value.toString().split(",", -1);
 
       for(int i=1; i<stringTokens.length; i++) {
-        if(stringTokens[i].isEmpty())
-          continue;
-        id.set(i);
-        context.write(id, one);
+        if (stringTokens[i].isEmpty()) {
+          id.set(i);
+          context.write(id, zero);
+        } else {
+          id.set(i);
+          context.write(id, one);
+        }
       }
     }
   }
