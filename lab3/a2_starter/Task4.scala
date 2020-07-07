@@ -2,10 +2,6 @@ import org.apache.spark.{SparkContext, SparkConf}
 
 // please don't change the object name
 object Task4 {
-//
-//  def compare(a: Array[String], b: Array[String]): String={
-//
-//  }
 
   def main(args: Array[String]) {
     val conf = new SparkConf().setAppName("Task 4")
@@ -27,7 +23,6 @@ object Task4 {
       }
       movie_1+","+movie_2+","+similarity;
     })
-      //compare(x._1,x._2));
     
     output.saveAsTextFile(args(1))
   }
