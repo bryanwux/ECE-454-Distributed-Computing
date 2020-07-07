@@ -28,8 +28,8 @@ public class Task3 {
         id.set(i);
         if (stringTokens[i].isEmpty()) {
           context.write(id, zero);
-          context.write(id, one);
         }
+        context.write(id, one);
       }
     }
   }
