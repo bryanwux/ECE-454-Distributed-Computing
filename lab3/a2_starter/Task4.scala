@@ -26,7 +26,7 @@ object Task4 {
         }
       }
       movie_1+","+movie_2+","+similarity;
-    }
+    })
       //compare(x._1,x._2));
     
     output.saveAsTextFile(args(1))
