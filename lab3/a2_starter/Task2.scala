@@ -12,10 +12,8 @@ object Task2 {
                         .filter(!_.isEmpty)
                         .count()
 
-    // modify this code
-
     // Array => RDD
-    // only perform the shuffle to one node
+    // avoid full shuffle, better than repartition
     sc.parallelize(Array(totalRatings))
                 .coalesce(1)
                 .saveAsTextFile(args(1))

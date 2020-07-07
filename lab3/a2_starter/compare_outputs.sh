@@ -52,6 +52,21 @@ fi
 rm normalized_spark.txt
 rm normalized_hadoop.txt
 
+hdfs dfs -cat task4-hadoop.out.txt/* | sort > normalized_spark.txt
+hdfs dfs -cat task4-spark.out.txt/* | sort > normalized_hadoop.txt
+
+echo Diffing Spark and Hadoop task4 outputs:
+diff normalized_spark.txt normalized_hadoop.txt
+
+if [ $? -eq 0 ]; then
+    echo Task4 Outputs match.
+else
+    echo Task4 Outputs do not match. Looks for bugs.
+fi
+
+rm normalized_spark.txt
+rm normalized_hadoop.txt
+
 
 
 
