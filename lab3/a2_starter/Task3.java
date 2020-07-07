@@ -24,12 +24,14 @@ public class Task3 {
             throws IOException, InterruptedException {
       String[] stringTokens = value.toString().split(",", -1);
 
-      for (int i = 1; i < stringTokens.length; i++) {
-        id.set(i);
+      for(int i=1; i<stringTokens.length; i++) {
         if (stringTokens[i].isEmpty()) {
+          id.set(i);
           context.write(id, zero);
+        } else {
+          id.set(i);
+          context.write(id, one);
         }
-        context.write(id, one);
       }
     }
   }
