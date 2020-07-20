@@ -1,4 +1,5 @@
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.util.*;
 
 import org.apache.thrift.*;
@@ -8,6 +9,7 @@ import org.apache.thrift.protocol.*;
 
 import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.*;
+import org.apache.zookeeper.jmx.ZKMBeanInfo;
 import org.apache.curator.*;
 import org.apache.curator.retry.*;
 import org.apache.curator.framework.*;
@@ -60,5 +62,15 @@ public class StorageNode {
 
 	// TODO: create an ephemeral node in ZooKeeper
 	// curClient.create(...)
-    }
+	String hostname = args[0];
+	int port = Integer.parseInt(args[1]);
+	String zkNode = args[3]; // /$USER
+	
+	// create an ephemeral and sequence node in ZooKeeper
+	String serverId = hostname + ":" + port;
+	curClient.create()
+			.withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
+			.forPath(zkNode + "/server-", serverId.getBytes());
+	}
+
 }
