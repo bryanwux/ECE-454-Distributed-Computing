@@ -17,9 +17,12 @@ import org.apache.curator.*;
 import org.apache.curator.retry.*;
 import org.apache.curator.framework.*;
 import org.apache.curator.framework.api.CuratorWatcher;
+import org.apache.log4j.*;
 
 public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
     public final int LOCK_NUM = 64;
+    public final int CLIENT_NUM = 32;
+    private static Logger log;
 
     private Map<String, String> myMap;
     private CuratorFramework curClient;
@@ -32,7 +35,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
     private ReentrantLock reLock = new ReentrantLock();
     private Striped<Lock> stripedLock = Striped.lock(LOCK_NUM);
     private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupPool = null;
-
+    
     public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) {
 	this.host = host;
 	this.port = port;
@@ -43,17 +46,6 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
     myMap = new ConcurrentHashMap<String, String>();
     
     
-    curClient.sync();
-    List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
-    if(children.size() > 1){
-        //sort the return list of children in ascending lexicographic order
-        Collections.sort(children);
-        byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
-        String strBackup = new String(data);
-        String[] backup = strBackup.split(":");
-        String backupHost = backup[0];
-        int backupPort = Integer.parseInt(backup[1]);
-    }
 
     
     }
@@ -92,7 +84,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
                     if(!this.backupPool.isEmpty()){
                         // retrieves the head of the backupPol
                         KeyValueService.Client backupClient = backupPool.poll();
-                        backupClient.putBackup(key,value);
+                        backupClient.backupPut(key,value);
                         this.backupPool.offer(backupClient);
                     }
                 }catch(Exception e){
@@ -106,8 +98,92 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
         }
     }
 
+    public void backupPut(String key, String value) throws org.apache.thrift.TException {
+        // Returns the stripe that corresponds to the passed key
+        Lock lock = stripedLock.get(key);
+        lock.lock();
+
+        try {
+            myMap.put(key, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void sync(Map<String, String> primaryMap) throws org.apache.thrift.TException {
+        myMap = new ConcurrentHashMap<String, String>(primaryMap);
+    }
+
     public synchronized Boolean isPrimary(){
         if (null == primaryAddress) return false;
         return (host.equals(primaryAddress.getHostName()) && port == primaryAddress.getPort());
+    }
+
+    synchronized public void decideNodes() throws Exception {
+        
+        while(true) {
+            curClient.sync();
+            List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
+            Collections.sort(children);
+            if (children.size() == 1) {
+                // only one children, must be primary
+                primaryAddress = new InetSocketAddress(host, port);
+                backupAddress = null;
+                backupPool = null;
+            } else if (children.size() > 1) {
+                // get backup data
+                byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
+                String strData = new String(strData);
+                String[] backup = strData.split(":");
+                String backupHost = backup[0];
+                int backupPort = Integer.parseInt(backup[1]);
+                if (isPrimary()) {
+                    try {
+                        TSocket sock = new TSocket(backupHost, backupPort);
+                        TTransport transport = new TFramedTransport(sock);
+                        transport.open();
+                        TProtocol protocol = new TBinaryProtocol(transport);
+                        KeyValueService.Client backupClient = new KeyValueService.Client(protocol);
+
+                        backupClient.sync(this.myMap);
+                        transport.close();
+                    } catch(Exception e) {
+                        System.out.println("Failed to copy to replica");
+                        //System.out.println(e.getLocalizedMessage());
+                    }
+                    reLock.lock();
+                    backupPool = new ConcurrentLinkedQueue<KeyValueService.Client>();
+                    for(int i = 0; i < CLIENT_NUM; i++) {
+                        TSocket sock = new TSocket(backupHost, backupPort);
+                        TTransport transport = new TFramedTransport(sock);
+                        transport.open();
+                        TProtocol protocol = new TBinaryProtocol(transport);
+                
+                        backupPool.add(new KeyValueService.Client(protocol));
+                    }
+                    reLock.unlock();  
+                }
+                backupPool = null;
+                backupAddress = new InetSocketAddress(backup[0], Integer.parseInt(backup[1]));
+                // get primary data
+                byte[] data1 = curClient.getData().forPath(zkNode + "/" + children.get(0));
+                String strData1 = new String(data);
+                String[] primary = strData.split(":");
+                primaryAddress = new InetSocketAddress(primary[0], Integer.parseInt(primary[1]));
+                System.out.println("Found primary " + strData);
+            }
+            break;
+        }
+    }
+    synchronized public void process(WatchedEvent event) {
+        System.out.println("ZooKeeper event: " + event);
+        try {
+            decideNodes();
+        } catch (Exception e) {
+            log.error("Unable to determine primary or children");
+            this.backupPool = null;
+        }
     }
 }
