@@ -5,36 +5,39 @@ source settings.sh
 JAVA_CC=$JAVA_HOME/bin/javac
 export CLASSPATH=".:gen-java:lib/*"
 
-# fixed port number
-KV_PORT=11118
-KV_PORT2=11888
+# change your port number
+KV_PORT=11119
+KV_PORT_2=11889
 echo Port number: $KV_PORT
-echo Port number 2: $KV_PORT2
+echo Port number 2: $KV_PORT_2
 
-kill -9 $(lsof -i:$KV_PORT -t)
-kill -9 $(lsof -i:$KV_PORT2 -t)
+kill -9 $(lsof -i:$KV_PORT -t) $(lsof -i:$KV_PORT_2 -t)
 
-# 130 seconds
 end=$((SECONDS + 130))
 
-# & at the end to run server with max heap 2G in parallel
 $JAVA_HOME/bin/java -Xmx2g StorageNode $(hostname) $KV_PORT $ZKSTRING /$USER &
-# ensure server on KV_PORT is primary
+P1=$!
 sleep 1s
-$JAVA_HOME/bin/java -Xmx2g StorageNode $(hostname) $KV_PORT2 $ZKSTRING /$USER &
-sleep 5s
+$JAVA_HOME/bin/java -Xmx2g StorageNode $(hostname) $KV_PORT_2 $ZKSTRING /$USER &
+P2=$!
+sleep 7s
 
 while [ $SECONDS -lt $end ]; do
-    kill -9 $(lsof -i:$KV_PORT -t)
-    sleep 1.5s
-    $JAVA_HOME/bin/java -Xmx2g StorageNode $(hostname) $KV_PORT $ZKSTRING /$USER &
-    sleep 1.5s
-    kill -9 $(lsof -i:$KV_PORT2 -t)
-    sleep 1.5s
-    $JAVA_HOME/bin/java -Xmx2g StorageNode $(hostname) $KV_PORT2 $ZKSTRING /$USER &
-    sleep 1.5s
+    KILL_P1=$(shuf -i 0-1 -n 1)
+
+    if [ "$KILL_P1" -eq 1 ]; then
+        kill -9 $P1
+        sleep 1.5s
+        $JAVA_HOME/bin/java -Xmx2g StorageNode $(hostname) $KV_PORT $ZKSTRING /$USER &
+        P1=$!
+        sleep 1.5s
+    else
+        kill -9 $P2
+        sleep 1.5s
+        $JAVA_HOME/bin/java -Xmx2g StorageNode $(hostname) $KV_PORT_2 $ZKSTRING /$USER &
+        P2=$!
+        sleep 1.5s
+    fi
 done
 
-sleep 1s
-kill -9 $(lsof -i:$KV_PORT -t)
-kill -9 $(lsof -i:$KV_PORT2 -t)
+kill -9 $P1 $P2
