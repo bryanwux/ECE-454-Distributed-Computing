@@ -45,13 +45,16 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         this.port = port;
         this.curClient = curClient;
         this.zkNode = zkNode;
+        myMap = new ConcurrentHashMap<String, String>();
+        primaryAddress = null;
+        backupAddress = null;
 
         log = Logger.getLogger(KeyValueHandler.class.getName());
         determineNodes(host, port, curClient, zkNode);
     }
 
     public void backupPut(String key, String value) throws org.apache.thrift.TException {
-        // // Key level locking 
+        // Returns the stripe that corresponds to the passed key
         Lock lock = stripedLock.get(key);
         lock.lock();
 
@@ -64,11 +67,11 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         }
     }
     
+    // copy data to backup
     public void sync(Map<String, String> data) throws org.apache.thrift.TException {
         this.myMap = new ConcurrentHashMap<String, String>(data); 
-        // System.out.println(this.myMap.size());
-        // System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Copy Data to backup Succeeded!");
     }
+
     public void determineNodes(String host, int port, CuratorFramework curClient, String zkNode) throws Exception {
         curClient.sync();
         List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
@@ -90,18 +93,17 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             }
         }
 
-        myMap = new ConcurrentHashMap<String, String>();
     }
 
     public void setPrimary(boolean isPrimary) throws org.apache.thrift.TException {
         this.isPrimary = isPrimary;
     }
 
-    // There is no need to lock the get operation
+    // basically read operation, do not need locks
     public String get(String key) throws org.apache.thrift.TException {
         if (isPrimary == false) {
             // System.out.println("Backup is not allowed to get.");
-            throw new org.apache.thrift.TException("Backup is not allowed to get.");
+            throw new org.apache.thrift.TException("can not read in backup");
         }
 
         try {
@@ -116,43 +118,43 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         }
     }
 
+    // basically write operation, need locks    
     public void put(String key, String value) throws org.apache.thrift.TException {
         if (isPrimary == false) {
-            // System.out.println("Backup is not allowed to put.");
-            throw new org.apache.thrift.TException("Backup is not allowed to put.");
-        }
+            throw new org.apache.thrift.TException("can not write in backup");
+        }else{
+            // Returns the stripe that corresponds to the passed key
+            Lock lock = stripedLock.get(key);
+            lock.lock();
 
-        // Key level locking 
-        Lock lock = stripedLock.get(key);
-        lock.lock();
+            // If the relock is set, which means copying data is in process, prevent write operation
+            while (reLock.isLocked())
+                doNothing();
 
-        // Check global lock. Prevent put operation during copying the data
-        while (reLock.isLocked());
+            try {
+                // save key-value pairs to primary
+                myMap.put(key, value);
 
-        try {
-            // Save data to local primary
-            myMap.put(key, value);
-
-            // has backup clients
-            if (this.backupPool != null) {
-                // writeToBackup
-                KeyValueService.Client currentBackupClient = null;
-
-                while(currentBackupClient == null) {
-                    currentBackupClient = backupPool.poll();
+                if (!this.backupPool.isEmpty()) {
+                    KeyValueService.Client backupClient = null;
+                    // retrieves the head of the backupPool
+                    backupClient = backupPool.poll();
+                    backupClient.backupPut(key, value);
+                    this.backupPool.offer(backupClient);
                 }
-    
-                currentBackupClient.backupPut(key, value);
-
-                this.backupPool.offer(currentBackupClient);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.backupPool = null;
+            } finally {
+                // release the lock
+                lock.unlock();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            this.backupPool = null;
-        } finally {
-            lock.unlock();
-        }
 
+            }
+    }
+
+    public void doNothing(){
+        System.out.println("A put operation is in process");
     }
 	synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
         // Lock the entire hashmap on primary
