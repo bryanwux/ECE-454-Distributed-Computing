@@ -50,25 +50,6 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
         curClient.sync();
         List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
 
-        if (children.size() == 1) {
-            this.isPrimary = true;
-        } else {
-            // Find primary and backup 
-            Collections.sort(children);
-            System.out.println(children.size());
-            byte[] Data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
-            String strData = new String(Data);
-            String[] backup = strData.split(":");
-            String backupHost = backup[0];
-            int backupPort = Integer.parseInt(backup[1]);
-
-            // Check if this is primary
-            if (backupHost.equals(host) && backupPort == port) {
-                this.isPrimary = false;
-            } else {
-                this.isPrimary = true;
-            }
-        }
     }
 
     // basically read operation, do not need locks
