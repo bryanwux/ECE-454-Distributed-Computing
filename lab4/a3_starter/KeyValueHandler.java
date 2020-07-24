@@ -182,24 +182,42 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 int backupPort = Integer.parseInt(backup[1]);
 
                 
-                determineNodes(host, port, curClient, zkNode);
+                if (backupHost.equals(host) && backupPort == port) {
+                    this.isPrimary = false;
+                } else {
+                    this.isPrimary = true;
+                }
                 
                 if (this.isPrimary && this.backupPool == null) {
                   
-                    try {
-                        TSocket sock = new TSocket(backupHost, backupPort);
-                        TTransport transport = new TFramedTransport(sock);
-                        transport.open();
-                        TProtocol protocol = new TBinaryProtocol(transport);
-                        KeyValueService.Client backupClient = new KeyValueService.Client(protocol);
+                    // try {
+                    //     TSocket sock = new TSocket(backupHost, backupPort);
+                    //     TTransport transport = new TFramedTransport(sock);
+                    //     transport.open();
+                    //     TProtocol protocol = new TBinaryProtocol(transport);
+                    //     KeyValueService.Client backupClient = new KeyValueService.Client(protocol);
 
-                        backupClient.sync(this.myMap);
-                    } catch(Exception e) {
-                        System.out.println("Failed to copy to replica");
-                        System.out.println(e.getLocalizedMessage());
+                    //     backupClient.sync(this.myMap);
+                    // } catch(Exception e) {
+                    //     System.out.println("Failed to copy to replica");
+                    //     System.out.println(e.getLocalizedMessage());
+                    // }
+                    KeyValueService.Client firstBackupClient = null;
+
+                    while(firstBackupClient == null) {
+                        try {
+                            TSocket sock = new TSocket(backupHost, backupPort);
+                            TTransport transport = new TFramedTransport(sock);
+                            transport.open();
+                            TProtocol protocol = new TBinaryProtocol(transport);
+                            firstBackupClient = new KeyValueService.Client(protocol);
+                        } catch (Exception e) {
+                            System.out.println("Failed to copy to replica");
+                        }
                     }
                     
                     reLock.lock();
+                    firstBackupClient.copyData(this.myMap);
                 
                     // Create 32 backup clients
                     this.backupPool = new ConcurrentLinkedQueue<KeyValueService.Client>();
