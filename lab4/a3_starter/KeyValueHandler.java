@@ -37,7 +37,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
     private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupPool = null;
     private volatile Boolean isPrimary = false;
 
-    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) {
+    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) throws Exception{
         this.host = host;
         this.port = port;
         this.curClient = curClient;
@@ -162,7 +162,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
             } else if (children.size() > 1) {
                 // get backup data
                 byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
-                String strData = new String(strData);
+                String strData = new String(data);
                 String[] backup = strData.split(":");
                 String backupHost = backup[0];
                 int backupPort = Integer.parseInt(backup[1]);
