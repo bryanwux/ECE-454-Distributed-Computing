@@ -180,13 +180,12 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             String backupHost = backup[0];
             int backupPort = Integer.parseInt(backup[1]);
 
-            // // Check if this is primary
-            // if (backupHost.equals(host) && backupPort == port) {
-            //     this.isPrimary = false;
-            // } else {
-            //     this.isPrimary = true;
-            // }
-            determineNodes(host, port, curClient, zkNode);
+            if (backupHost.equals(host) && backupPort == port) {
+                this.isPrimary = false;
+            } else {
+                this.isPrimary = true;
+            }
+            //determineNodes(host, port, curClient, zkNode);
 
             
             if (this.isPrimary && this.backupPool == null) {
