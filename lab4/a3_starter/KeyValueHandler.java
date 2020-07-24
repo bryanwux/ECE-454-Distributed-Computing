@@ -217,7 +217,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                     }
                     
                     reLock.lock();
-                    firstBackupClient.copyData(this.myMap);
+                    firstBackupClient.sync(this.myMap);
                 
                     // Create 32 backup clients
                     this.backupPool = new ConcurrentLinkedQueue<KeyValueService.Client>();
