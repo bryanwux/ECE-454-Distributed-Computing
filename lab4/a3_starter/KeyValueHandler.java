@@ -55,7 +55,8 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
         } else {
             // Find primary and backup 
             Collections.sort(children);
-            byte[] Data = curClient.getData().forPath(zkNode + "/" + children.get(1));
+            System.out.println(children.size());
+            byte[] Data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
             String strData = new String(Data);
             String[] backup = strData.split(":");
             String backupHost = backup[0];
