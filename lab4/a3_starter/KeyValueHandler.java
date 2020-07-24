@@ -196,7 +196,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                         TProtocol protocol = new TBinaryProtocol(transport);
                         firstBackupClient = new KeyValueService.Client(protocol);
                     } catch (Exception e) {
-                        System.out.println("Failed to copy to replica");
+                        //System.out.println("Failed to copy to replica");
                     }
                 }
                 
@@ -227,15 +227,5 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             this.backupPool = null;
         }
     }
-
-    // synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
-    //     System.out.println("ZooKeeper event: " + event);
-    //     try {
-    //         decideNodes(event);
-    //     } catch (Exception e) {
-    //         log.error("Unable to determine primary or children");
-    //         this.backupPool = null;
-    //     }
-    // }
 
 }
