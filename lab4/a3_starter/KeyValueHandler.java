@@ -159,7 +159,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         return (host.equals(primaryAddress.getHostName()) && port == primaryAddress.getPort());
     }
 
-	synchronized public void decideNodes(WatchedEvent event) throws org.apache.thrift.TException {
+	synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
         try {
             curClient.sync();
             List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
@@ -251,14 +251,14 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         }
     }
 
-    synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
-        System.out.println("ZooKeeper event: " + event);
-        try {
-            decideNodes(event);
-        } catch (Exception e) {
-            log.error("Unable to determine primary or children");
-            this.backupPool = null;
-        }
-    }
+    // synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
+    //     System.out.println("ZooKeeper event: " + event);
+    //     try {
+    //         decideNodes(event);
+    //     } catch (Exception e) {
+    //         log.error("Unable to determine primary or children");
+    //         this.backupPool = null;
+    //     }
+    // }
 
 }
