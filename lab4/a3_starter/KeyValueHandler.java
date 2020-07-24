@@ -120,7 +120,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                     currentBackupClient = backupClients.poll();
                 }
     
-                currentBackupClient.putBackup(key, value);
+                currentBackupClient.backupPut(key, value);
 
                 this.backupClients.offer(currentBackupClient);
             }
@@ -203,7 +203,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 globalLock.lock();
                 
                 // System.out.println(this.myMap.size());
-                firstBackupClient.copyData(this.myMap);
+                firstBackupClient.sync(this.myMap);
 
                 // Create 32 backup clients
                 this.backupClients = new ConcurrentLinkedQueue<KeyValueService.Client>();
