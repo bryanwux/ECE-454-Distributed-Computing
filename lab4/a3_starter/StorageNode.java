@@ -111,7 +111,7 @@ public class StorageNode {
 					Thread.sleep(1);
 					backupClient.setPrimary(true);
 					
-					Thread.sleep(2000);
+					Thread.sleep(20);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

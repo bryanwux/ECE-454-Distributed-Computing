@@ -159,15 +159,12 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         return (host.equals(primaryAddress.getHostName()) && port == primaryAddress.getPort());
     }
 
-	synchronized public void decideNodes(WatchedEvent event) throws org.apache.thrift.TException {
-        // Lock the entire hashmap on primary
+	synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
         try {
-            // Get all the children
             curClient.sync();
             List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
 
             if (children.size() == 1) {
-                // System.out.println("Is Primary: " + true);
                 this.isPrimary = true;
                 return;
             }
@@ -182,16 +179,13 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
 
             // Check if this is primary
             if (backupHost.equals(host) && backupPort == port) {
-                // System.out.println("Is Primary: " + false);
                 this.isPrimary = false;
             } else {
-                // System.out.println("Is Primary: " + true);
                 this.isPrimary = true;
             }
             
             if (this.isPrimary && this.backupPool == null) {
-                // System.out.println("Copying Data to backup >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-                // Create first backup client for data transfer
+          
                 KeyValueService.Client firstBackupClient = null;
 
                 while(firstBackupClient == null) {
@@ -202,7 +196,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                         TProtocol protocol = new TBinaryProtocol(transport);
                         firstBackupClient = new KeyValueService.Client(protocol);
                     } catch (Exception e) {
-                        // System.out.println("First backup client failed. Retrying ...");
+                        System.out.println("Failed to copy to replica");
                     }
                 }
                 
@@ -234,14 +228,14 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         }
     }
 
-    synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
-        System.out.println("ZooKeeper event: " + event);
-        try {
-            decideNodes(event);
-        } catch (Exception e) {
-            log.error("Unable to determine primary or children");
-            this.backupPool = null;
-        }
-    }
+    // synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
+    //     System.out.println("ZooKeeper event: " + event);
+    //     try {
+    //         decideNodes(event);
+    //     } catch (Exception e) {
+    //         log.error("Unable to determine primary or children");
+    //         this.backupPool = null;
+    //     }
+    // }
 
 }
