@@ -22,6 +22,10 @@ import com.google.common.util.concurrent.Striped;
 import org.apache.log4j.*;
 
 public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
+    public final int LOCK_NUM = 64;
+    public final int CLIENT_NUM = 32;
+    private volatile Boolean isPrimary = false;
+
     private Map<String, String> myMap;
     private CuratorFramework curClient;
     private String zkNode;
@@ -29,41 +33,59 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
     private int port;
 
     private static Logger log;
-    private volatile Boolean isPrimary = false;
-    private ReentrantLock globalLock = new ReentrantLock();
-    private Striped<Lock> stripedLock = Striped.lock(64);
-    private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupClients = null;
-    private int clientNumber = 32;
+    
+    private volatile InetSocketAddress primaryAddress;
+    private volatile InetSocketAddress backupAddress;
+    private ReentrantLock reLock = new ReentrantLock();
+    private Striped<Lock> stripedLock = Striped.lock(LOCK_NUM);
+    private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupPool = null;
 
-    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) throws Exception {
+    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode){
         this.host = host;
         this.port = port;
         this.curClient = curClient;
         this.zkNode = zkNode;
 
         log = Logger.getLogger(KeyValueHandler.class.getName());
-        // Set up watcher
+        determineNodes(host, port, curClient, zkNode);
+    }
+
+    public void backupPut(String key, String value) throws org.apache.thrift.TException {
+        // // Key level locking 
+        Lock lock = stripedLock.get(key);
+        lock.lock();
+
+        try {
+            myMap.put(key, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+    public void sync(Map<String, String> data) throws org.apache.thrift.TException {
+        this.myMap = new ConcurrentHashMap<String, String>(data); 
+        // System.out.println(this.myMap.size());
+        // System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Copy Data to backup Succeeded!");
+    }
+    public void determineNodes(String host, int port, CuratorFramework curClient, String zkNode) throws Exception {
         curClient.sync();
         List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
 
         if (children.size() == 1) {
-            // System.out.println("Is Primary: " + true);
             this.isPrimary = true;
         } else {
-            // Find primary data and backup data
             Collections.sort(children);
-            byte[] backupData = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
-            String strBackupData = new String(backupData);
-            String[] backup = strBackupData.split(":");
+            byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
+            String strData = new String(data);
+            String[] backup = strData.split(":");
             String backupHost = backup[0];
             int backupPort = Integer.parseInt(backup[1]);
 
-            // Check if this is primary
             if (backupHost.equals(host) && backupPort == port) {
-                // System.out.println("Is Primary: " + false);
                 this.isPrimary = false;
             } else {
-                // System.out.println("Is Primary: " + true);
                 this.isPrimary = true;
             }
         }
@@ -105,7 +127,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         lock.lock();
 
         // Check global lock. Prevent put operation during copying the data
-        while (globalLock.isLocked());
+        while (reLock.isLocked());
 
         try {
             // Save data to local primary
@@ -130,28 +152,8 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         } finally {
             lock.unlock();
         }
-    }
 
-    public void backupPut(String key, String value) throws org.apache.thrift.TException {
-        // // Key level locking 
-        Lock lock = stripedLock.get(key);
-        lock.lock();
-
-        try {
-            myMap.put(key, value);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            lock.unlock();
-        }
     }
-    
-    public void sync(Map<String, String> data) throws org.apache.thrift.TException {
-        this.myMap = new ConcurrentHashMap<String, String>(data); 
-        // System.out.println(this.myMap.size());
-        // System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Copy Data to backup Succeeded!");
-    }
-    
 	synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
         // Lock the entire hashmap on primary
         try {
@@ -200,7 +202,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 }
                 
                 // Copy data to backup
-                globalLock.lock();
+                reLock.lock();
                 
                 // System.out.println(this.myMap.size());
                 firstBackupClient.sync(this.myMap);
@@ -216,7 +218,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             
                     this.backupClients.add(new KeyValueService.Client(protocol));
                 }
-                globalLock.unlock();
+                reLock.unlock();
             } else {
                 // System.out.println("Does not have backup clients.");
                 this.backupClients = null;
