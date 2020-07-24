@@ -128,14 +128,14 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             lock.lock();
 
             // If the relock is set, which means copying data is in process, prevent write operation
-            while (reLock.isLocked());
-                //doNothing();
+            while (reLock.isLocked())
+                doNothing();
 
             try {
                 // save key-value pairs to primary
                 myMap.put(key, value);
 
-                if (!this.backupPool.isEmpty()) {
+                if (this.backupPool != null) {
                     KeyValueService.Client backupClient = null;
                     // retrieves the head of the backupPool
                     backupClient = backupPool.poll();
