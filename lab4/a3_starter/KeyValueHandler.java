@@ -167,9 +167,8 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             if (children.size() == 1) {
                 // only one children, must be primary
                 this.isPrimary = true;                
-                primaryAddress = new InetSocketAddress(host, port);
+                primaryAddress = null;
                 backupAddress = null;
-                this.backupPool = null;
                 this.isPrimary = true;
                 return;
             }else{
@@ -190,18 +189,6 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 
                 if (this.isPrimary && this.backupPool == null) {
                   
-                    // try {
-                    //     TSocket sock = new TSocket(backupHost, backupPort);
-                    //     TTransport transport = new TFramedTransport(sock);
-                    //     transport.open();
-                    //     TProtocol protocol = new TBinaryProtocol(transport);
-                    //     KeyValueService.Client backupClient = new KeyValueService.Client(protocol);
-
-                    //     backupClient.sync(this.myMap);
-                    // } catch(Exception e) {
-                    //     System.out.println("Failed to copy to replica");
-                    //     System.out.println(e.getLocalizedMessage());
-                    // }
                     KeyValueService.Client firstBackupClient = null;
 
                     while(firstBackupClient == null) {
@@ -234,17 +221,8 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 } else {
                     this.backupPool = null;
                 }
-                }
-                // backupPool = null;
-                // //backupAddress = new InetSocketAddress(backup[0], Integer.parseInt(backup[1]));
-                // // get primary data
-                // byte[] data1 = curClient.getData().forPath(zkNode + "/" + children.get(0));
-                // String strData1 = new String(data1);
-                // String[] primary = strData1.split(":");
-                // primaryAddress = new InetSocketAddress(primary[0], Integer.parseInt(primary[1]));
-                // System.out.println("Found primary " + strData1);
+            }
 
-        
         } catch (Exception e) {
             log.error("Unable to determine primary or children");
             this.backupPool = null;
