@@ -38,6 +38,9 @@ public class StorageNode {
 	    .build();
 
 	curClient.start();
+	curClient.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
+						.forPath(args[3] + "/ChildNode", (args[0] + ":" + args[1])
+						.getBytes());
 	Runtime.getRuntime().addShutdownHook(new Thread() {
 		public void run() {
 		    curClient.close();
