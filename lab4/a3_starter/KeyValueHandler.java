@@ -35,25 +35,45 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
     private ReentrantLock reLock = new ReentrantLock();
     private Striped<Lock> stripedLock = Striped.lock(LOCK_NUM);
     private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupPool = null;
-    
-    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) {
-	this.host = host;
-	this.port = port;
-	this.curClient = curClient;
-    this.zkNode = zkNode;
-    primaryAddress = null;
-    backupAddress = null;
-    myMap = new ConcurrentHashMap<String, String>();
-    
-    
+    private volatile Boolean isPrimary = false;
 
-    
+    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) {
+        this.host = host;
+        this.port = port;
+        this.curClient = curClient;
+        this.zkNode = zkNode;
+        primaryAddress = null;
+        backupAddress = null;
+        myMap = new ConcurrentHashMap<String, String>();
+        log = Logger.getLogger(KeyValueHandler.class.getName());
+        // Set up watcher
+        curClient.sync();
+        List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
+
+        if (children.size() == 1) {
+            this.isPrimary = true;
+        } else {
+            // Find primary and backup 
+            Collections.sort(children);
+            byte[] Data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
+            String strData = new String(Data);
+            String[] backup = strData.split(":");
+            String backupHost = backup[0];
+            int backupPort = Integer.parseInt(backup[1]);
+
+            // Check if this is primary
+            if (backupHost.equals(host) && backupPort == port) {
+                this.isPrimary = false;
+            } else {
+                this.isPrimary = true;
+            }
+        }
     }
 
     // basically read operation, do not need locks
     public String get(String key) throws org.apache.thrift.TException
     {	
-        if (!isPrimary()){
+        if (isPrimary == false){
             throw new org.apache.thrift.TException("Backup znode can not get");
         }else{
             try{
@@ -71,7 +91,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
     // basically write operation, need locks
     public void put(String key, String value) throws org.apache.thrift.TException
     {
-        if (!isPrimary()){
+        if (isPrimary == false){
             throw new org.apache.thrift.TException("Backup znode can not get");
         }else{
             // Returns the stripe that corresponds to the passed key
@@ -116,6 +136,10 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
         myMap = new ConcurrentHashMap<String, String>(primaryMap);
     }
 
+    public void setPrimary(boolean isPrimary) throws org.apache.thrift.TException {
+        this.isPrimary = isPrimary;
+    }
+
     public synchronized Boolean isPrimary(){
         if (null == primaryAddress) return false;
         return (host.equals(primaryAddress.getHostName()) && port == primaryAddress.getPort());
@@ -132,6 +156,9 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
                 primaryAddress = new InetSocketAddress(host, port);
                 backupAddress = null;
                 backupPool = null;
+                this.isPrimary = true;
+                return;
+
             } else if (children.size() > 1) {
                 // get backup data
                 byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
@@ -139,7 +166,12 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher {
                 String[] backup = strData.split(":");
                 String backupHost = backup[0];
                 int backupPort = Integer.parseInt(backup[1]);
-                if (isPrimary()) {
+                if (backupHost.equals(host) && backupPort == port) {
+                    this.isPrimary = false;
+                } else {
+                    this.isPrimary = true;
+                }
+                if (isPrimary() && this.backupPool == null) {
                     try {
                         TSocket sock = new TSocket(backupHost, backupPort);
                         TTransport transport = new TFramedTransport(sock);
