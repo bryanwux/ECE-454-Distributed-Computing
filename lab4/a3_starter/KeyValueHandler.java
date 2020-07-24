@@ -180,12 +180,14 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             String backupHost = backup[0];
             int backupPort = Integer.parseInt(backup[1]);
 
-            // Check if this is primary
-            if (backupHost.equals(host) && backupPort == port) {
-                this.isPrimary = false;
-            } else {
-                this.isPrimary = true;
-            }
+            // // Check if this is primary
+            // if (backupHost.equals(host) && backupPort == port) {
+            //     this.isPrimary = false;
+            // } else {
+            //     this.isPrimary = true;
+            // }
+            determineNodes(host, port, curClient, zkNode);
+
             
             if (this.isPrimary && this.backupPool == null) {
           
@@ -203,13 +205,9 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                     }
                 }
                 
-                // Copy data to backup
                 reLock.lock();
-                
-                // System.out.println(this.myMap.size());
                 firstBackupClient.sync(this.myMap);
 
-                // Create 32 backup clients
                 this.backupPool = new ConcurrentLinkedQueue<KeyValueService.Client>();
     
                 for(int i = 0; i < CLIENT_NUM; i++) {
@@ -217,7 +215,6 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                     TTransport transport = new TFramedTransport(sock);
                     transport.open();
                     TProtocol protocol = new TBinaryProtocol(transport);
-            
                     this.backupPool.add(new KeyValueService.Client(protocol));
                 }
                 reLock.unlock();
