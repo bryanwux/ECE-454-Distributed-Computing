@@ -172,64 +172,64 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 this.backupPool = null;
                 this.isPrimary = true;
                 return;
-            }
-            
-            // Find primary data and backup data
-            Collections.sort(children);
-            byte[] backupData = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
-            String strBackupData = new String(backupData);
-            String[] backup = strBackupData.split(":");
-            String backupHost = backup[0];
-            int backupPort = Integer.parseInt(backup[1]);
+            }else{
+                // Find primary data and backup data
+                Collections.sort(children);
+                byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
+                String strData = new String(data);
+                String[] backup = strData.split(":");
+                String backupHost = backup[0];
+                int backupPort = Integer.parseInt(backup[1]);
 
-            // Check if this is primary
-            if (backupHost.equals(host) && backupPort == port) {
-                // System.out.println("Is Primary: " + false);
-                this.isPrimary = false;
-            } else {
-                // System.out.println("Is Primary: " + true);
-                this.isPrimary = true;
-            }
-            
-            if (this.isPrimary && this.backupPool == null) {
-                // System.out.println("Copying Data to backup >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-                // Create first backup client for data transfer
-                KeyValueService.Client firstBackupClient = null;
-
-                while(firstBackupClient == null) {
+                
+                determineNodes(host, port, curClient, zkNode);
+                
+                if (this.isPrimary && this.backupPool == null) {
+                  
                     try {
                         TSocket sock = new TSocket(backupHost, backupPort);
                         TTransport transport = new TFramedTransport(sock);
                         transport.open();
                         TProtocol protocol = new TBinaryProtocol(transport);
-                        firstBackupClient = new KeyValueService.Client(protocol);
-                    } catch (Exception e) {
-                        // System.out.println("First backup client failed. Retrying ...");
-                    }
-                }
-                
-                // Copy data to backup
-                reLock.lock();
-                
-                // System.out.println(this.myMap.size());
-                firstBackupClient.sync(this.myMap);
+                        KeyValueService.Client backupClient = new KeyValueService.Client(protocol);
 
-                // Create 32 backup clients
-                this.backupPool = new ConcurrentLinkedQueue<KeyValueService.Client>();
-    
-                for(int i = 0; i < CLIENT_NUM; i++) {
-                    TSocket sock = new TSocket(backupHost, backupPort);
-                    TTransport transport = new TFramedTransport(sock);
-                    transport.open();
-                    TProtocol protocol = new TBinaryProtocol(transport);
-            
-                    this.backupPool.add(new KeyValueService.Client(protocol));
+                        backupClient.sync(this.myMap);
+                        transport.close();
+                    } catch(Exception e) {
+                        System.out.println("Failed to copy to replica");
+                        System.out.println(e.getLocalizedMessage());
+                    }
+                    
+                    reLock.lock();
+                
+                    // Create 32 backup clients
+                    this.backupPool = new ConcurrentLinkedQueue<KeyValueService.Client>();
+        
+                    for(int i = 0; i < CLIENT_NUM; i++) {
+                        TSocket sock = new TSocket(backupHost, backupPort);
+                        TTransport transport = new TFramedTransport(sock);
+                        transport.open();
+                        TProtocol protocol = new TBinaryProtocol(transport);
+                
+                        this.backupPool.add(new KeyValueService.Client(protocol));
+                    }
+                    reLock.unlock();
+                } else {
+                    // System.out.println("Does not have backup clients.");
+                    this.backupPool = null;
                 }
-                reLock.unlock();
-            } else {
-                // System.out.println("Does not have backup clients.");
-                this.backupPool = null;
-            }
+                }
+                backupPool = null;
+                //backupAddress = new InetSocketAddress(backup[0], Integer.parseInt(backup[1]));
+                // get primary data
+                byte[] data1 = curClient.getData().forPath(zkNode + "/" + children.get(0));
+                String strData1 = new String(data1);
+                String[] primary = strData1.split(":");
+                primaryAddress = new InetSocketAddress(primary[0], Integer.parseInt(primary[1]));
+                System.out.println("Found primary " + strData1);
+
+            
+            
         } catch (Exception e) {
             log.error("Unable to determine primary or children");
             this.backupPool = null;
