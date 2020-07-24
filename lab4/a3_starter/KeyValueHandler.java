@@ -149,14 +149,19 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 // release the lock
                 lock.unlock();
             }
-
             }
     }
 
     public void doNothing(){
         System.out.println("A put operation is in process");
     }
-	synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
+
+    public synchronized Boolean isPrimary(){
+        if (null == primaryAddress) return false;
+        return (host.equals(primaryAddress.getHostName()) && port == primaryAddress.getPort());
+    }
+
+	synchronized public void decideNodes(WatchedEvent event) throws org.apache.thrift.TException {
         // Lock the entire hashmap on primary
         try {
             // Get all the children
@@ -230,4 +235,15 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             this.backupPool = null;
         }
     }
+
+    synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
+        System.out.println("ZooKeeper event: " + event);
+        try {
+            decideNodes(event);
+        } catch (Exception e) {
+            log.error("Unable to determine primary or children");
+            this.backupPool = null;
+        }
+    }
+
 }
