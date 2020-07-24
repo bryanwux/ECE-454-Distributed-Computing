@@ -132,7 +132,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         }
     }
 
-    public void putBackup(String key, String value) throws org.apache.thrift.TException {
+    public void backupPut(String key, String value) throws org.apache.thrift.TException {
         // // Key level locking 
         Lock lock = stripedLock.get(key);
         lock.lock();
@@ -146,7 +146,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         }
     }
     
-    public void copyData(Map<String, String> data) throws org.apache.thrift.TException {
+    public void sync(Map<String, String> data) throws org.apache.thrift.TException {
         this.myMap = new ConcurrentHashMap<String, String>(data); 
         // System.out.println(this.myMap.size());
         // System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Copy Data to backup Succeeded!");
