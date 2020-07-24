@@ -194,7 +194,6 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                         KeyValueService.Client backupClient = new KeyValueService.Client(protocol);
 
                         backupClient.sync(this.myMap);
-                        transport.close();
                     } catch(Exception e) {
                         System.out.println("Failed to copy to replica");
                         System.out.println(e.getLocalizedMessage());
@@ -215,21 +214,19 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                     }
                     reLock.unlock();
                 } else {
-                    // System.out.println("Does not have backup clients.");
                     this.backupPool = null;
                 }
                 }
-                backupPool = null;
-                //backupAddress = new InetSocketAddress(backup[0], Integer.parseInt(backup[1]));
-                // get primary data
-                byte[] data1 = curClient.getData().forPath(zkNode + "/" + children.get(0));
-                String strData1 = new String(data1);
-                String[] primary = strData1.split(":");
-                primaryAddress = new InetSocketAddress(primary[0], Integer.parseInt(primary[1]));
-                System.out.println("Found primary " + strData1);
+                // backupPool = null;
+                // //backupAddress = new InetSocketAddress(backup[0], Integer.parseInt(backup[1]));
+                // // get primary data
+                // byte[] data1 = curClient.getData().forPath(zkNode + "/" + children.get(0));
+                // String strData1 = new String(data1);
+                // String[] primary = strData1.split(":");
+                // primaryAddress = new InetSocketAddress(primary[0], Integer.parseInt(primary[1]));
+                // System.out.println("Found primary " + strData1);
 
-            
-            
+        
         } catch (Exception e) {
             log.error("Unable to determine primary or children");
             this.backupPool = null;
