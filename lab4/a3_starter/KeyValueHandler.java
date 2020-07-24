@@ -40,7 +40,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
     private Striped<Lock> stripedLock = Striped.lock(LOCK_NUM);
     private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupPool = null;
 
-    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode){
+    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) throws Exception{
         this.host = host;
         this.port = port;
         this.curClient = curClient;
