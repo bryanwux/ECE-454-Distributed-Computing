@@ -134,21 +134,21 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             myMap.put(key, value);
 
             // has backup clients
-            if (this.backupClients != null) {
+            if (this.backupPool != null) {
                 // writeToBackup
                 KeyValueService.Client currentBackupClient = null;
 
                 while(currentBackupClient == null) {
-                    currentBackupClient = backupClients.poll();
+                    currentBackupClient = backupPool.poll();
                 }
     
                 currentBackupClient.backupPut(key, value);
 
-                this.backupClients.offer(currentBackupClient);
+                this.backupPool.offer(currentBackupClient);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            this.backupClients = null;
+            this.backupPool = null;
         } finally {
             lock.unlock();
         }
@@ -184,7 +184,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 this.isPrimary = true;
             }
             
-            if (this.isPrimary && this.backupClients == null) {
+            if (this.isPrimary && this.backupPool == null) {
                 // System.out.println("Copying Data to backup >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
                 // Create first backup client for data transfer
                 KeyValueService.Client firstBackupClient = null;
@@ -208,24 +208,24 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 firstBackupClient.sync(this.myMap);
 
                 // Create 32 backup clients
-                this.backupClients = new ConcurrentLinkedQueue<KeyValueService.Client>();
+                this.backupPool = new ConcurrentLinkedQueue<KeyValueService.Client>();
     
-                for(int i = 0; i < clientNumber; i++) {
+                for(int i = 0; i < CLIENT_NUM; i++) {
                     TSocket sock = new TSocket(backupHost, backupPort);
                     TTransport transport = new TFramedTransport(sock);
                     transport.open();
                     TProtocol protocol = new TBinaryProtocol(transport);
             
-                    this.backupClients.add(new KeyValueService.Client(protocol));
+                    this.backupPool.add(new KeyValueService.Client(protocol));
                 }
                 reLock.unlock();
             } else {
                 // System.out.println("Does not have backup clients.");
-                this.backupClients = null;
+                this.backupPool = null;
             }
         } catch (Exception e) {
             log.error("Unable to determine primary or children");
-            this.backupClients = null;
+            this.backupPool = null;
         }
     }
 }
