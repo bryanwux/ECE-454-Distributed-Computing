@@ -1,9 +1,10 @@
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.locks.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import com.google.common.util.concurrent.Striped;
 
 import org.apache.thrift.*;
 import org.apache.thrift.server.*;
@@ -15,10 +16,7 @@ import org.apache.zookeeper.data.*;
 import org.apache.curator.*;
 import org.apache.curator.retry.*;
 import org.apache.curator.framework.*;
-import org.apache.curator.framework.api.*;
-
-import com.google.common.util.concurrent.Striped;
-
+import org.apache.curator.framework.api.CuratorWatcher;
 import org.apache.log4j.*;
 
 public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
@@ -162,14 +160,16 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
     }
 
 	synchronized public void decideNodes(WatchedEvent event) throws org.apache.thrift.TException {
-        // Lock the entire hashmap on primary
         try {
-            // Get all the children
             curClient.sync();
             List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
 
             if (children.size() == 1) {
-                // System.out.println("Is Primary: " + true);
+                // only one children, must be primary
+                this.isPrimary = true;                
+                primaryAddress = new InetSocketAddress(host, port);
+                backupAddress = null;
+                this.backupPool = null;
                 this.isPrimary = true;
                 return;
             }
