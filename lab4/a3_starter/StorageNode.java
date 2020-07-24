@@ -31,7 +31,7 @@ public class StorageNode {
 				.retryPolicy(new RetryNTimes(10, 1000)).connectionTimeoutMs(1000).sessionTimeoutMs(10000).build();
 
 		curClient.start();
-		curClient.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(args[3] + "/Server", (args[0] + ":" + args[1]).getBytes());
+		curClient.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(args[3] + "/ChildNode", (args[0] + ":" + args[1]).getBytes());
 
 		KeyValueService.Processor<KeyValueService.Iface> processor = new KeyValueService.Processor<>(
 				new KeyValueHandler(args[0], Integer.parseInt(args[1]), curClient, args[3]));
@@ -62,56 +62,64 @@ public class StorageNode {
 						children = curClient.getChildren().forPath(zkNode);
 					}
 
+					// If only primary
 					if (children.size() == 1) {
 						return;
 					} 
 
-					// get backup data if there is a backup 
+					// If has backup, get backup data 
 					Collections.sort(children);
-					byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
-					String strData = new String(data);
-					String[] backup = strData.split(":");
+					byte[] backupData = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
+					String strBackupData = new String(backupData);
+					String[] backup = strBackupData.split(":");
 					String backupHost = backup[0];
 					int backupPort = Integer.parseInt(backup[1]);
-					Thread.sleep(1);
-		
-					// get primary data
-					byte[] data2 = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 2));
-					String strData2 = new String(data2);
-					String[] primary = strData2.split(":");
-					String primaryHost = primary[0];
-					int primaryPort = Integer.parseInt(primary[1]);
-					
-					
-					TSocket sock = new TSocket(primaryHost, primaryPort);
-					TTransport transport = new TFramedTransport(sock);
-					transport.open();
-					TProtocol protocol = new TBinaryProtocol(transport);
-					KeyValueService.Client client = new KeyValueService.Client(protocol);
-					
-					while (true) {
-						try {
-							client.setPrimary(true);	
-							continue;
-						} catch (Exception e) {
-							break;
-						}
-					}
-					Thread.sleep(1);
-					//delete primary znode
-					curClient.delete().forPath(zkNode + "/" + children.get(children.size() - 2));
 
-					// set backup to become the new primary
-					System.out.println("Backup becomes the primary");
-					sock = new TSocket(backupHost, backupPort);
-					transport = new TFramedTransport(sock);
-					transport.open();
-					protocol = new TBinaryProtocol(transport);
-					KeyValueService.Client backupClient = new KeyValueService.Client(protocol);
-					Thread.sleep(1);
-					backupClient.setPrimary(true);
-					
-					Thread.sleep(20);
+					// Ping primary if this is backup
+					// if (backupHost.equals(args[0]) && backupPort == Integer.parseInt(args[1])) {
+						// get primary data
+						byte[] primaryData = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 2));
+						String strPrimaryData = new String(primaryData);
+						String[] primary = strPrimaryData.split(":");
+						String primaryHost = primary[0];
+						int primaryPort = Integer.parseInt(primary[1]);
+						
+						
+						System.out.println("Try to ping primary...");
+						TSocket sock = new TSocket(primaryHost, primaryPort);
+						TTransport transport = new TFramedTransport(sock);
+						transport.open();
+						TProtocol protocol = new TBinaryProtocol(transport);
+						KeyValueService.Client primaryClient = new KeyValueService.Client(protocol);
+						
+						while (true) {
+							try {
+								Thread.sleep(50);
+								primaryClient.setPrimary(true);	// Won't change anything
+								// Primary alive 
+								continue;
+							} catch (Exception e) {
+								System.out.println("Backup loose connection to Primary");
+								// Cannot connect to Primary
+								break;
+							}
+						}
+
+						//Primary is dead. Delete primary znode
+						System.out.println("Delete primary znode");
+						curClient.delete().forPath(zkNode + "/" + children.get(children.size() - 2));
+
+						// Backup set itself as Primary
+						System.out.println("Backup becomes the primary");
+						sock = new TSocket(backupHost, backupPort);
+						transport = new TFramedTransport(sock);
+						transport.open();
+						protocol = new TBinaryProtocol(transport);
+						KeyValueService.Client BackupClient = new KeyValueService.Client(protocol);
+						
+						BackupClient.setPrimary(true);
+					// }
+					// Thread.sleep(1000);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
