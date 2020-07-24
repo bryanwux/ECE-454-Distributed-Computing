@@ -1,9 +1,10 @@
+import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.*;
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.locks.*;
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import com.google.common.util.concurrent.Striped;
 
 import org.apache.thrift.*;
 import org.apache.thrift.server.*;
@@ -15,13 +16,14 @@ import org.apache.zookeeper.data.*;
 import org.apache.curator.*;
 import org.apache.curator.retry.*;
 import org.apache.curator.framework.*;
-import org.apache.curator.framework.api.*;
-
-import com.google.common.util.concurrent.Striped;
-
+import org.apache.curator.framework.api.CuratorWatcher;
 import org.apache.log4j.*;
 
 public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
+    public final int LOCK_NUM = 64;
+    public final int CLIENT_NUM = 32;
+    private volatile Boolean isPrimary = false;
+
     private Map<String, String> myMap;
     private CuratorFramework curClient;
     private String zkNode;
@@ -29,57 +31,77 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
     private int port;
 
     private static Logger log;
-    private volatile Boolean isPrimary = false;
-    private ReentrantLock globalLock = new ReentrantLock();
-    private Striped<Lock> stripedLock = Striped.lock(64);
-    private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupClients = null;
-    private int clientNumber = 32;
+    
+    private volatile InetSocketAddress primaryAddress;
+    private volatile InetSocketAddress backupAddress;
+    private ReentrantLock reLock = new ReentrantLock();
+    private Striped<Lock> stripedLock = Striped.lock(LOCK_NUM);
+    private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupPool = null;
 
-    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) throws Exception {
+    public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) throws Exception{
         this.host = host;
         this.port = port;
         this.curClient = curClient;
         this.zkNode = zkNode;
+        myMap = new ConcurrentHashMap<String, String>();
+        primaryAddress = null;
+        backupAddress = null;
 
         log = Logger.getLogger(KeyValueHandler.class.getName());
-        // Set up watcher
+        determineNodes(host, port, curClient, zkNode);
+    }
+
+    public void backupPut(String key, String value) throws org.apache.thrift.TException {
+        // Returns the stripe that corresponds to the passed key
+        Lock lock = stripedLock.get(key);
+        lock.lock();
+
+        try {
+            myMap.put(key, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+    
+    // copy data to backup
+    public void sync(Map<String, String> data) throws org.apache.thrift.TException {
+        this.myMap = new ConcurrentHashMap<String, String>(data); 
+    }
+
+    public void determineNodes(String host, int port, CuratorFramework curClient, String zkNode) throws Exception {
         curClient.sync();
         List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
 
         if (children.size() == 1) {
-            // System.out.println("Is Primary: " + true);
             this.isPrimary = true;
         } else {
-            // Find primary data and backup data
             Collections.sort(children);
-            byte[] backupData = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
-            String strBackupData = new String(backupData);
-            String[] backup = strBackupData.split(":");
+            byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
+            String strData = new String(data);
+            String[] backup = strData.split(":");
             String backupHost = backup[0];
             int backupPort = Integer.parseInt(backup[1]);
 
-            // Check if this is primary
             if (backupHost.equals(host) && backupPort == port) {
-                // System.out.println("Is Primary: " + false);
                 this.isPrimary = false;
             } else {
-                // System.out.println("Is Primary: " + true);
                 this.isPrimary = true;
             }
         }
 
-        myMap = new ConcurrentHashMap<String, String>();
     }
 
     public void setPrimary(boolean isPrimary) throws org.apache.thrift.TException {
         this.isPrimary = isPrimary;
     }
 
-    // There is no need to lock the get operation
+    // basically read operation, do not need locks
     public String get(String key) throws org.apache.thrift.TException {
         if (isPrimary == false) {
             // System.out.println("Backup is not allowed to get.");
-            throw new org.apache.thrift.TException("Backup is not allowed to get.");
+            throw new org.apache.thrift.TException("can not read in backup");
         }
 
         try {
@@ -94,97 +116,79 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
         }
     }
 
+    // basically write operation, need locks    
     public void put(String key, String value) throws org.apache.thrift.TException {
         if (isPrimary == false) {
-            // System.out.println("Backup is not allowed to put.");
-            throw new org.apache.thrift.TException("Backup is not allowed to put.");
-        }
+            throw new org.apache.thrift.TException("can not write in backup");
+        }else{
+            // Returns the stripe that corresponds to the passed key
+            Lock lock = stripedLock.get(key);
+            lock.lock();
 
-        // Key level locking 
-        Lock lock = stripedLock.get(key);
-        lock.lock();
+            // If the relock is set, which means copying data is in process, prevent write operation
+            while (reLock.isLocked())
+                doNothing();
 
-        // Check global lock. Prevent put operation during copying the data
-        while (globalLock.isLocked());
+            try {
+                // save key-value pairs to primary
+                myMap.put(key, value);
 
-        try {
-            // Save data to local primary
-            myMap.put(key, value);
-
-            // has backup clients
-            if (this.backupClients != null) {
-                // writeToBackup
-                KeyValueService.Client currentBackupClient = null;
-
-                while(currentBackupClient == null) {
-                    currentBackupClient = backupClients.poll();
+                if (this.backupPool != null) {
+                    KeyValueService.Client backupClient = null;
+                    // retrieves the head of the backupPool
+                    backupClient = backupPool.poll();
+                    backupClient.backupPut(key, value);
+                    this.backupPool.offer(backupClient);
                 }
-    
-                currentBackupClient.putBackup(key, value);
-
-                this.backupClients.offer(currentBackupClient);
+            } catch (Exception e) {
+                e.printStackTrace();
+                this.backupPool = null;
+            } finally {
+                // release the lock
+                lock.unlock();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            this.backupClients = null;
-        } finally {
-            lock.unlock();
-        }
+            }
     }
 
-    public void putBackup(String key, String value) throws org.apache.thrift.TException {
-        // // Key level locking 
-        Lock lock = stripedLock.get(key);
-        lock.lock();
+    public void doNothing(){
+        System.out.println("A put operation is in process");
+    }
 
-        try {
-            myMap.put(key, value);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            lock.unlock();
-        }
+    public synchronized Boolean isPrimary(){
+        if (null == primaryAddress) return false;
+        return (host.equals(primaryAddress.getHostName()) && port == primaryAddress.getPort());
     }
-    
-    public void copyData(Map<String, String> data) throws org.apache.thrift.TException {
-        this.myMap = new ConcurrentHashMap<String, String>(data); 
-        // System.out.println(this.myMap.size());
-        // System.out.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Copy Data to backup Succeeded!");
-    }
-    
+
 	synchronized public void process(WatchedEvent event) throws org.apache.thrift.TException {
-        // Lock the entire hashmap on primary
         try {
-            // Get all the children
             curClient.sync();
             List<String> children = curClient.getChildren().usingWatcher(this).forPath(zkNode);
 
             if (children.size() == 1) {
-                // System.out.println("Is Primary: " + true);
+                // only one children, must be primary
+                primaryAddress = null;
+                backupAddress = null;
                 this.isPrimary = true;
                 return;
             }
-            
-            // Find primary data and backup data
+
+            // get backup data
             Collections.sort(children);
-            byte[] backupData = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
-            String strBackupData = new String(backupData);
-            String[] backup = strBackupData.split(":");
+            byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
+            String strData = new String(data);
+            String[] backup = strData.split(":");
             String backupHost = backup[0];
             int backupPort = Integer.parseInt(backup[1]);
 
             // Check if this is primary
             if (backupHost.equals(host) && backupPort == port) {
-                // System.out.println("Is Primary: " + false);
                 this.isPrimary = false;
             } else {
-                // System.out.println("Is Primary: " + true);
                 this.isPrimary = true;
             }
             
-            if (this.isPrimary && this.backupClients == null) {
-                // System.out.println("Copying Data to backup >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-                // Create first backup client for data transfer
+            if (this.isPrimary && this.backupPool == null) {
+          
                 KeyValueService.Client firstBackupClient = null;
 
                 while(firstBackupClient == null) {
@@ -195,35 +199,35 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                         TProtocol protocol = new TBinaryProtocol(transport);
                         firstBackupClient = new KeyValueService.Client(protocol);
                     } catch (Exception e) {
-                        // System.out.println("First backup client failed. Retrying ...");
+                        //System.out.println("Failed to copy to replica");
                     }
                 }
                 
                 // Copy data to backup
-                globalLock.lock();
+                reLock.lock();
                 
                 // System.out.println(this.myMap.size());
-                firstBackupClient.copyData(this.myMap);
+                firstBackupClient.sync(this.myMap);
 
                 // Create 32 backup clients
-                this.backupClients = new ConcurrentLinkedQueue<KeyValueService.Client>();
+                this.backupPool = new ConcurrentLinkedQueue<KeyValueService.Client>();
     
-                for(int i = 0; i < clientNumber; i++) {
+                for(int i = 0; i < CLIENT_NUM; i++) {
                     TSocket sock = new TSocket(backupHost, backupPort);
                     TTransport transport = new TFramedTransport(sock);
                     transport.open();
                     TProtocol protocol = new TBinaryProtocol(transport);
             
-                    this.backupClients.add(new KeyValueService.Client(protocol));
+                    this.backupPool.add(new KeyValueService.Client(protocol));
                 }
-                globalLock.unlock();
+                reLock.unlock();
             } else {
-                // System.out.println("Does not have backup clients.");
-                this.backupClients = null;
+                this.backupPool = null;
             }
         } catch (Exception e) {
             log.error("Unable to determine primary or children");
-            this.backupClients = null;
+            this.backupPool = null;
         }
     }
+
 }
