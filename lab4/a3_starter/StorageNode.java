@@ -31,7 +31,15 @@ public class StorageNode {
 				.retryPolicy(new RetryNTimes(10, 1000)).connectionTimeoutMs(1000).sessionTimeoutMs(10000).build();
 
 		curClient.start();
-		curClient.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL).forPath(args[3] + "/ChildNode", (args[0] + ":" + args[1]).getBytes());
+		String hostname = args[0];
+		int port = Integer.parseInt(args[1]);
+		String zkNode = args[3]; // /$USER
+	
+		// create an ephemeral and sequence node in ZooKeeper
+		String serverId = hostname + ":" + port;
+		curClient.create()
+			.withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
+			.forPath(zkNode + "/server-", serverId.getBytes());
 
 		KeyValueService.Processor<KeyValueService.Iface> processor = new KeyValueService.Processor<>(
 				new KeyValueHandler(args[0], Integer.parseInt(args[1]), curClient, args[3]));
