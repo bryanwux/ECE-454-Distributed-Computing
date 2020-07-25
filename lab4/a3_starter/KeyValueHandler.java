@@ -31,12 +31,12 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
     private int port;
 
     private static Logger log;
-    
+    private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupPool = null;
     private volatile InetSocketAddress primaryAddress;
     private volatile InetSocketAddress backupAddress;
     private ReentrantLock reLock = new ReentrantLock();
     private Striped<Lock> stripedLock = Striped.lock(LOCK_NUM);
-    private volatile ConcurrentLinkedQueue<KeyValueService.Client> backupPool = null;
+    
 
     public KeyValueHandler(String host, int port, CuratorFramework curClient, String zkNode) throws Exception{
         this.host = host;
@@ -187,7 +187,6 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             }
             //determineNodes(host, port, curClient, zkNode);
 
-            
             if (this.isPrimary && this.backupPool == null) {
           
                 KeyValueService.Client firstBackupClient = null;
@@ -226,9 +225,12 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             primaryAddress = new InetSocketAddress(primary[0], Integer.parseInt(primary[1]));
             System.out.println("Found primary " + strPrimaryData);
         } catch (Exception e) {
-            log.error("Unable to determine primary or children");
             this.backupPool = null;
         }
+    }
+
+    private int hash(String key) {
+        return Math.abs(key.hashCode()%this.LOCK_NUM);
     }
 
 }
