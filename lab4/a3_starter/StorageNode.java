@@ -88,20 +88,11 @@ public class StorageNode {
 					TProtocol protocol = new TBinaryProtocol(transport);
 					KeyValueService.Client client = new KeyValueService.Client(protocol);
 					
-					while (true) {
-						try {
-							client.setPrimary(true);	
-							continue;
-						} catch (Exception e) {
-							break;
-						}
-					}
+					
 					Thread.sleep(1);
 					//delete primary znode
 					curClient.delete().forPath(zkNode + "/" + children.get(children.size() - 2));
-
 					// set backup to become the new primary
-					System.out.println("Backup becomes the primary");
 					sock = new TSocket(backupHost, backupPort);
 					transport = new TFramedTransport(sock);
 					transport.open();
