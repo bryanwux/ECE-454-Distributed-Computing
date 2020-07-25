@@ -221,10 +221,10 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 this.backupPool = null;
             }
             byte[] primaryData = curClient.getData().forPath(zkNode + "/" + children.get(0));
-            String strPrimaryData = new String(data);
-            String[] primary = strData.split(":");
+            String strPrimaryData = new String(primaryData);
+            String[] primary = strPrimaryData.split(":");
             primaryAddress = new InetSocketAddress(primary[0], Integer.parseInt(primary[1]));
-            System.out.println("Found primary " + strData);
+            System.out.println("Found primary " + strPrimaryData);
         } catch (Exception e) {
             log.error("Unable to determine primary or children");
             this.backupPool = null;
