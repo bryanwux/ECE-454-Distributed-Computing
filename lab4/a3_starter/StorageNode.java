@@ -61,11 +61,10 @@ public class StorageNode {
 						curClient.sync();
 						children = curClient.getChildren().forPath(zkNode);
 					}
-
 					if (children.size() == 1) {
+						Thread.sleep(1);
 						return;
 					} 
-
 					// get backup data if there is a backup 
 					Collections.sort(children);
 					byte[] data = curClient.getData().forPath(zkNode + "/" + children.get(children.size() - 1));
