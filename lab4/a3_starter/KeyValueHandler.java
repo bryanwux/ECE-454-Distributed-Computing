@@ -134,11 +134,11 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 myMap.put(key, value);
 
                 if (this.backupPool != null) {
-                    KeyValueService.Client backupClient = null;
+                    KeyValueService.Client client = null;
                     // retrieves the head of the backupPool
-                    backupClient = backupPool.poll();
-                    backupClient.backupPut(key, value);
-                    this.backupPool.offer(backupClient);
+                    client = backupPool.poll();
+                    client.backupPut(key, value);
+                    this.backupPool.offer(client);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -147,7 +147,7 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
                 // release the lock
                 lock.unlock();
             }
-            }
+        }
     }
 
     public void doNothing(){
@@ -220,6 +220,11 @@ public class KeyValueHandler implements KeyValueService.Iface, CuratorWatcher{
             } else {
                 this.backupPool = null;
             }
+            byte[] primaryData = curClient.getData().forPath(zkNode + "/" + children.get(0));
+            String strPrimaryData = new String(data);
+            String[] primary = strData.split(":");
+            primaryAddress = new InetSocketAddress(primary[0], Integer.parseInt(primary[1]));
+            System.out.println("Found primary " + strData);
         } catch (Exception e) {
             log.error("Unable to determine primary or children");
             this.backupPool = null;
