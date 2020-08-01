@@ -43,7 +43,9 @@ public class A4Application {
 
 		KTable<String,String> studentLocation = studentInfo.toTable();
 
-		KTable<String,String> output = studentLocation.join(classroomCapacity);
+		KTable<String,String> output = studentLocation.join(classroomCapacity,
+				(leftValue, rightValue) -> "left=" + leftValue + ", right=" + rightValue
+				);
 
 		output.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
 
