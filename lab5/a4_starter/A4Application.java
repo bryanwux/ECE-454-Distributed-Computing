@@ -38,16 +38,14 @@ public class A4Application {
 		// add code here if you need any additional configuration options
 		StreamsBuilder builder = new StreamsBuilder();
 		// add code here
-		KTable<String,String> studentInfo = builder.table(studentTopic, Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("student_location"));
+		KStream<String,String> studentInfo = builder.stream(studentTopic, Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("student_location"));
 		KTable<String,String> classroomCapacity = builder.table(classroomTopic, Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("room_cap"));
 
 		//KTable<String,String> studentLocation = studentInfo.toTable();
 
-		KTable<String,String> output = studentInfo.join(classroomCapacity,
-				(leftValue, rightValue) -> "left=" + leftValue + ", right=" + rightValue
-				);
+		//KTable<String,String> output = studentInfo.join(classroomCapacity);
 
-		studentInfo.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
+		studentInfo.foreach((key,value) -> System.out.println(key + " : " + value));
 
 //		KTable<String,Long> roomCurrentPopulation = studentInfo.map(
 //				(key,value)-> {
