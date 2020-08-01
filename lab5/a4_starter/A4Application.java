@@ -47,7 +47,7 @@ public class A4Application {
 				(leftValue, rightValue) -> "left=" + leftValue + ", right=" + rightValue
 				);
 
-		output.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
+		studentInfo.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
 
 //		KTable<String,Long> roomCurrentPopulation = studentInfo.map(
 //				(key,value)-> {
