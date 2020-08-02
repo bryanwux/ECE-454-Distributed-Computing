@@ -13,6 +13,7 @@ import org.apache.kafka.streams.kstream.TimeWindows;
 
 import java.util.Arrays;
 import java.util.Properties;
+import org.apache.commons.lang3.StringUtils;
 
 
 public class A4Application {
@@ -63,7 +64,7 @@ public class A4Application {
 					if(currentCapacity>totalCapacity){
 						return status=Integer.toString(currentCapacity);
 					}else{
-						if(StringUtils.isNumeric(aggValue)) {
+						if(StringUtils.isNumeric(oldValue)) {
 							return status = "OK";
 						}else{
 							return null;
@@ -73,7 +74,7 @@ public class A4Application {
 				Materialized.as("output")
 		);
 
-		output.toStream().to(outputTopic,Produced.with(Serdes.String(),Serdes.String()));
+		output.toStream().filter((key, value) -> value != null).to(outputTopic,Produced.with(Serdes.String(),Serdes.String()));
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		// this line initiates processing
