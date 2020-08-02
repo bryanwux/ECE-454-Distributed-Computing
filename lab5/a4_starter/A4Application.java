@@ -57,8 +57,8 @@ public class A4Application {
 				()->"",
 				(aggKey, newValue, oldValue)->{
 					String status=null;
-					Int currentCapacity = (Int)newValue.toString()[0];
-					Int totalCapacity = (Int)newValue.toString()[1];
+					Integer currentCapacity = (Integer)newValue.toString()[0];
+					Integer totalCapacity = (Integer)newValue.toString()[1];
 					if(currentCapacity>totalCapacity){
 						status=(String)(currentCapacity-totalCapacity);
 					}else{
