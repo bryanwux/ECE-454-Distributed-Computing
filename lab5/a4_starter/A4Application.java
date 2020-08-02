@@ -64,7 +64,7 @@ public class A4Application {
 					}else{
 						status="OK";
 					}
-					return KeyValue.pair(aggKey,status)
+					return KeyValue.pair(aggKey,status);
 				}
 		);
 
