@@ -47,11 +47,11 @@ public class A4Application {
 
 		KTable<String,Long> classromm_curcap = student_classroom.groupBy((key,value)-> KeyValue.pair(value,key)).count();
 		//join
-//		KTable<String,String> classroom_ = classromm_curcap.join(student_classroom,
-//				(leftValue,rightValue) -> leftValue.toString()+","+rightValue.toString()
-//				);
+		KTable<String,String> classroom_curcap_cap = classromm_curcap.join(classroom_capacity,
+				(leftValue,rightValue) -> leftValue.toString()+","+rightValue.toString()
+				);
 
-		classromm_curcap.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
+		classroom_curcap_cap.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
 		//compare and output
 //		KTable<Stirng,String> output = student_capacity.aggregate(
 //				()->"",
