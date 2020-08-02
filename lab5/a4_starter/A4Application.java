@@ -65,7 +65,7 @@ public class A4Application {
 						if(StringUtils.isNumeric(aggValue)) {
 							return status = "OK";
 						}else{
-							return null;
+							return status;
 						}
 					}
 				},
