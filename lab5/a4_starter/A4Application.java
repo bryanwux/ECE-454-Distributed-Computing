@@ -52,8 +52,6 @@ public class A4Application {
 				(leftValue,rightValue) -> leftValue.toString()+","+rightValue.toString(),
 				Materialized.as("join")
 				);
-
-		//classroom_curcap_cap.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
 		//compare and output
 		KTable<String,String> output = classroom_curcap_cap.toStream().groupBy((key,value)-> key).aggregate(
 				()->"",
@@ -74,7 +72,9 @@ public class A4Application {
 				Materialized.as("output")
 		);
 
-		output.toStream().to(outputTopic,Produced.with(Serdes.String(),Serdes.String()));
+		output.toStream().filter((key, value) -> {
+			return value!=null;
+		}).to(outputTopic,Produced.with(Serdes.String(),Serdes.String()));
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		// this line initiates processing
