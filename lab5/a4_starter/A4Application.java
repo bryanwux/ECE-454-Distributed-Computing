@@ -45,7 +45,7 @@ public class A4Application {
 		//reduce classroomCapacity
 		KTable<String,String> classroom_capacity = classroomCapacity.groupBy((key,value)-> key).reduce((aggValue, newValue) -> newValue);
 
-		KTable<String,Long> classromm_curcap = student_classroom.foreach((key,value)-> value+","+key).groupBy((key,value)-> key).count();
+		KTable<String,Long> classromm_curcap = student_classroom.groupBy((key,value)-> KeyValue.pair(value,key)).count();
 		//join
 //		KTable<String,String> classroom_ = classromm_curcap.join(student_classroom,
 //				(leftValue,rightValue) -> leftValue.toString()+","+rightValue.toString()
