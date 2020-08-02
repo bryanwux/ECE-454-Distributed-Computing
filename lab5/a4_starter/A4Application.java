@@ -74,7 +74,7 @@ public class A4Application {
 				Materialized.as("output")
 		);
 
-		output.toStream().filter((key, value) -> value != null).to(outputTopic,Produced.with(Serdes.String(),Serdes.String()));
+		output.toStream().to(outputTopic,Produced.with(Serdes.String(),Serdes.String()));
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		// this line initiates processing
