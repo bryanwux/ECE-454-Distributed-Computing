@@ -46,7 +46,7 @@ public class A4Application {
 
 		//KTable<String,String> output = studentInfo.join(classroomCapacity);
 
-		keyValueStore.foreach((key,value) -> System.out.println(key + " : " + value));
+		view.foreach((key,value) -> System.out.println(key + " : " + value));
 
 //		KTable<String,Long> roomCurrentPopulation = studentInfo.map(
 //				(key,value)-> {
