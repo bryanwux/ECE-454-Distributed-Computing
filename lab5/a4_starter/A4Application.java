@@ -43,9 +43,9 @@ public class A4Application {
 		//reduce studentInfo
 		KTable<String,String> student_classroom = studentInfo.groupBy((key,value)-> key).reduce((aggValue, newValue) -> newValue);
 		//reduce classroomCapacity
-		KTable<String,String> classroom_capacity = classroomCapacity.groupBy((key,value)-> key).reduce((aggValue, newValue) -> newValue);
+		KTable<String,String> classroom_capacity = classroomCapacity.groupBy((key,value) -> key).reduce((aggValue, newValue) -> newValue);
 
-		KTable<String,Long> classromm_curcap = student_classroom.groupBy((key,value)-> KeyValue.pair(value,key)).count();
+		KTable<String,Long> classromm_curcap = student_classroom.groupBy((key,value) -> KeyValue.pair(value,key)).count();
 		//join
 		KTable<String,String> classroom_curcap_cap = classromm_curcap.join(classroom_capacity,
 				(leftValue,rightValue) -> leftValue.toString()+","+rightValue.toString()
@@ -53,17 +53,24 @@ public class A4Application {
 
 		classroom_curcap_cap.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
 		//compare and output
-//		KTable<Stirng,String> output = student_capacity.aggregate(
-//				()->"",
-//				(aggKey, newValue, aggValue)->{
-//
-//				}
-//		);
+		KTable<Stirng,String> output = classroom_curcap_cap.aggregate(
+				()->"",
+				(aggKey, newValue, oldValue)->{
+					String status=null;
+					String currentCapacity = newValue.toString()[0];
+					String totalCapacity = newValue.toString()[1];
+					if(currentCapacity>totalCapacity){
+						status=(String)((int)currentCapacity-(int)totalCapacity);
+					}else{
+						status="OK";
+					}
+					return KeyValue.pair(aggKey,status)
+				}
+		);
 
-
+		output.toStream().to(outputTopic,Produced.with(Serdes.String(),Serdes.String()));
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
-		// ...to(outputTopic);
 		// this line initiates processing
 		streams.start();
 
