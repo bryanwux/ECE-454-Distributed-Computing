@@ -60,7 +60,7 @@ public class A4Application {
 					Integer currentCapacity = (Integer)newValue.toString()[0];
 					Integer totalCapacity = (Integer)newValue.toString()[1];
 					if(currentCapacity>totalCapacity){
-						status=(String)(currentCapacity-totalCapacity);
+						status=Integer.toString(currentCapacity-totalCapacity);
 					}else{
 						status="OK";
 					}
