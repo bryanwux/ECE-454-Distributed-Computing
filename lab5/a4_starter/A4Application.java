@@ -41,18 +41,18 @@ public class A4Application {
 		KStream<String,String> classroomCapacity = builder.stream(classroomTopic);
 
 		//reduce studentInfo
-		KTable<String,String> student_classroom = studentInfo.groupBy((key,value)-> key).reduce((aggValue, newValue) -> newValue, Materialized.<String,String,KeyValueStore<Bytes,byte[]>>as("student_classroom"));
+		KTable<String,String> student_classroom = studentInfo.groupBy((key,value)-> key).reduce((aggValue, newValue) -> newValue, Materialized.as("student_classroom"));
 		//reduce classroomCapacity
-		KTable<String,String> classroom_capacity = classroomCapacity.groupBy((key,value) -> key).reduce((aggValue, newValue) -> newValue, Materialized.<String,String,KeyValueStore<Bytes,byte[]>>as("classroom_capacity"));
+		KTable<String,String> classroom_capacity = classroomCapacity.groupBy((key,value) -> key).reduce((aggValue, newValue) -> newValue, Materialized.as("classroom_capacity"));
 
-		KTable<String,Long> classromm_curcap = student_classroom.groupBy((key,value) -> KeyValue.pair(value,key)).count(Materialized.<String,Long,KeyValueStore<Bytes,byte[]>>as("classromm_curcap"));
+		KTable<String,Long> classromm_curcap = student_classroom.groupBy((key,value) -> KeyValue.pair(value,key)).count(Materialized.as("classromm_curcap"));
 		//join
 		KTable<String,String> classroom_curcap_cap = classromm_curcap.join(classroom_capacity,
 				(leftValue,rightValue) -> leftValue.toString()+","+rightValue.toString(),
-				Materialized.<String,String,KeyValueStore<Bytes,byte[]>>as("join")
+				Materialized.as("join")
 				);
 
-		classroom_curcap_cap.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
+		//classroom_curcap_cap.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
 		//compare and output
 		KTable<String,String> output = classroom_curcap_cap.toStream().groupBy((key,value)-> key).aggregate(
 				()->"",
@@ -70,7 +70,7 @@ public class A4Application {
 						}
 					}
 				},
-				Materialized.<String,String,KeyValueStore<Bytes,byte[]>>as("output")
+				Materialized.as("output")
 		);
 
 		output.toStream().to(outputTopic,Produced.with(Serdes.String(),Serdes.String()));
