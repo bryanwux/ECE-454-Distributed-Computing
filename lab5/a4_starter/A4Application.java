@@ -53,14 +53,14 @@ public class A4Application {
 
 		classroom_curcap_cap.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
 		//compare and output
-		KTable<Stirng,String> output = classroom_curcap_cap.aggregate(
+		KTable<String,String> output = classroom_curcap_cap.groupBy((key,value)-> key).aggregate(
 				()->"",
 				(aggKey, newValue, oldValue)->{
 					String status=null;
-					String currentCapacity = newValue.toString()[0];
-					String totalCapacity = newValue.toString()[1];
+					Int currentCapacity = (Int)newValue.toString()[0];
+					Int totalCapacity = (Int)newValue.toString()[1];
 					if(currentCapacity>totalCapacity){
-						status=(String)((int)currentCapacity-(int)totalCapacity);
+						status=(String)(currentCapacity-totalCapacity);
 					}else{
 						status="OK";
 					}
