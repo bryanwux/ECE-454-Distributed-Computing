@@ -49,7 +49,7 @@ public class A4Application {
 				(leftValue,rightValue) -> leftValue+","+rightValue
 				);
 
-		student_capacity.foreach((key,value) -> System.out.println(key + " : " + value));
+		student_capacity.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
 
 
 
