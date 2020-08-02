@@ -46,10 +46,11 @@ public class A4Application {
 		KTable<String,String> classroom_capacity = classroomCapacity.groupBy((key,value)-> key).reduce((aggValue, newValue) -> newValue);
 
 		KTable<String,String> student_capacity = student_classroom.join(classroom_capacity,
-				(leftValue,rightValue) -> leftValue+","+rightValue
+				(leftValue,rightValue) -> leftValue.toString()+","+rightValue.toString()
 				);
 
 		student_capacity.toStream().foreach((key,value) -> System.out.println(key + " : " + value));
+
 
 
 
