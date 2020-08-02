@@ -10,8 +10,6 @@ import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.TimeWindows;
-import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -40,20 +38,20 @@ public class A4Application {
 		StreamsBuilder builder = new StreamsBuilder();
 		// add code here
 		KStream<String,String> studentInfo = builder.stream(studentTopic);
-		KTable<String,String> classroomCapacity = builder.table(classroomTopic, Materialized.<String, String, KeyValueStore<Bytes, byte[]>>as("room_cap"));
+		KStream<String,String> classroomCapacity = builder.stream(classroomTopic);
 
-		ReadOnlyKeyValueStore view = streams.store("room_cap", QueryableStoreTypes.keyValueStore());
-		//KTable<String,String> studentLocation = studentInfo.toTable();
+		//reduce studentInfo
+		KTable<String,String> student_classroom = studentInfo.groupBy((key,value)-> key).reduce((aggValue, newValue) -> newValue);
+		//reduce classroomCapacity
+		KTable<String,String> classroom_capacity = classroomCapacity.groupBy((key,value)-> key).reduce((aggValue, newValue) -> newValue);
 
-		//KTable<String,String> output = studentInfo.join(classroomCapacity);
+		KTable<String,String> student_capacity = student_classroom.join(classroom_capacity,
+				(leftValue,rightValue) -> leftValue+","+rightValue
+				);
 
-		view.foreach((key,value) -> System.out.println(key + " : " + value));
+		student_capacity.foreach((key,value) -> System.out.println(key + " : " + value));
 
-//		KTable<String,Long> roomCurrentPopulation = studentInfo.map(
-//				(key,value)-> {
-//
-//				}
-//			);
+
 
 		KafkaStreams streams = new KafkaStreams(builder.build(), props);
 		// ...to(outputTopic);
