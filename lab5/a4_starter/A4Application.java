@@ -63,7 +63,7 @@ public class A4Application {
 					if(currentCapacity>totalCapacity){
 						return status=Integer.toString(currentCapacity);
 					}else{
-						if(aggValue != null && aggValue.toString() != "OK") {
+						if(StringUtils.isNumeric(aggValue)) {
 							return status = "OK";
 						}else{
 							return null;
